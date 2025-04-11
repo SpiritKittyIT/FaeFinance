@@ -1,5 +1,6 @@
 package spirit.realm.faefinance.data.repositories
 
+import kotlinx.coroutines.flow.Flow
 import spirit.realm.faefinance.data.classes.Category
 import spirit.realm.faefinance.data.daos.CategoryDao
 
@@ -8,8 +9,8 @@ interface ICategoryRepository {
     suspend fun insertAll(categories: List<Category>)
     suspend fun update(category: Category)
     suspend fun delete(category: Category)
-    suspend fun getCategoryById(id: Int): Category?
-    suspend fun getAllCategories(): List<Category>
+    fun getCategoryById(id: Int): Flow<Category>
+    fun getAllCategories(): Flow<List<Category>>
 }
 
 class CategoryRepository(
@@ -32,11 +33,11 @@ class CategoryRepository(
         categoryDao.delete(category)
     }
 
-    override suspend fun getCategoryById(id: Int): Category? {
-        return categoryDao.getCategoryById(id)
+    override fun getCategoryById(id: Int): Flow<Category> {
+        return categoryDao.getById(id)
     }
 
-    override suspend fun getAllCategories(): List<Category> {
-        return categoryDao.getAllCategories()
+    override fun getAllCategories(): Flow<List<Category>> {
+        return categoryDao.getAll()
     }
 }

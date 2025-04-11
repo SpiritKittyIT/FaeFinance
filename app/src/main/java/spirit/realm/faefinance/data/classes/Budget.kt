@@ -3,9 +3,15 @@ package spirit.realm.faefinance.data.classes
 import androidx.room.*
 import java.util.Date
 
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["startDate"]),
+        Index(value = ["endDate"])
+    ]
+)
 data class Budget(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
+    var budgetSet: Int = 0,
     var title: String,
     val currency: String, // ISO code
     var amount: Double,

@@ -2,9 +2,13 @@ package spirit.realm.faefinance.data.classes
 
 import androidx.room.*
 
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["title"])
+    ]
+)
 data class Category(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
     val title: String,
     val symbol: String
 )

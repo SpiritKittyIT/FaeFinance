@@ -3,7 +3,7 @@ package spirit.realm.faefinance.data.classes
 import androidx.room.Embedded
 import androidx.room.Relation
 
-data class PeriodicTransactionWithExpanded(
+data class PeriodicTransactionExpanded(
     @Embedded val periodicTransaction: PeriodicTransaction,
 
     // Expanded sender account details

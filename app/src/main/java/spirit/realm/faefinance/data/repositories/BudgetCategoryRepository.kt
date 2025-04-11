@@ -1,5 +1,6 @@
 package spirit.realm.faefinance.data.repositories
 
+import kotlinx.coroutines.flow.Flow
 import spirit.realm.faefinance.data.classes.BudgetCategory
 import spirit.realm.faefinance.data.daos.BudgetCategoryDao
 
@@ -7,7 +8,8 @@ interface IBudgetCategoryRepository {
     suspend fun insert(budgetCategory: BudgetCategory)
     suspend fun insertAll(budgetCategories: List<BudgetCategory>)
     suspend fun delete(budgetCategory: BudgetCategory)
-    suspend fun getCategoriesForBudget(budgetId: Int): List<BudgetCategory>
+    suspend fun deleteAll(budgetCategories: List<BudgetCategory>)
+    fun getAllForBudget(budgetId: Int): Flow<List<BudgetCategory>>
 }
 
 class BudgetCategoryRepository(
@@ -26,7 +28,11 @@ class BudgetCategoryRepository(
         budgetCategoryDao.delete(budgetCategory)
     }
 
-    override suspend fun getCategoriesForBudget(budgetId: Int): List<BudgetCategory> {
-        return budgetCategoryDao.getCategoriesForBudget(budgetId)
+    override suspend fun deleteAll(budgetCategories: List<BudgetCategory>) {
+        budgetCategoryDao.deleteAll(budgetCategories)
+    }
+
+    override fun getAllForBudget(budgetId: Int): Flow<List<BudgetCategory>> {
+        return budgetCategoryDao.getAllForBudget(budgetId)
     }
 }

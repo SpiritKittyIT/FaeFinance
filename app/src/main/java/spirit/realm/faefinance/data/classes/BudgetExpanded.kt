@@ -2,7 +2,7 @@ package spirit.realm.faefinance.data.classes
 
 import androidx.room.*
 
-data class BudgetWithCategories(
+data class BudgetExpanded(
     @Embedded val budget: Budget,
     @Relation(
         parentColumn = "id",

@@ -1,10 +1,12 @@
 package spirit.realm.faefinance.data.daos
 
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 import spirit.realm.faefinance.data.classes.Category
 
 @Dao
 interface CategoryDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(category: Category)
 
@@ -17,9 +19,11 @@ interface CategoryDao {
     @Delete
     suspend fun delete(category: Category)
 
+    // Retrieves a Category by its id
     @Query("SELECT * FROM Category WHERE id = :id")
-    suspend fun getCategoryById(id: Int): Category?
+    fun getById(id: Int): Flow<Category>
 
+    // Retrieves all Category records from the database, ordered by title in ascending order
     @Query("SELECT * FROM Category ORDER BY title ASC")
-    suspend fun getAllCategories(): List<Category>
+    fun getAll(): Flow<List<Category>>
 }

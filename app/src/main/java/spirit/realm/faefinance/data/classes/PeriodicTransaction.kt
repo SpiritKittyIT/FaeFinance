@@ -3,9 +3,13 @@ package spirit.realm.faefinance.data.classes
 import androidx.room.*
 import java.util.Date
 
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["nextTransaction"])
+    ]
+)
 data class PeriodicTransaction(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
     var type: ETransactionType,
     var title: String,
     var amount: Double,

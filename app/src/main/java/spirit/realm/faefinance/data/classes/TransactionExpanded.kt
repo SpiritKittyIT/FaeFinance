@@ -3,7 +3,7 @@ package spirit.realm.faefinance.data.classes
 import androidx.room.Embedded
 import androidx.room.Relation
 
-data class TransactionWithExpanded(
+data class TransactionExpanded(
     @Embedded val transaction: Transaction,
 
     @Relation(

@@ -1,68 +1,87 @@
 package spirit.realm.faefinance.data.daos
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 import spirit.realm.faefinance.data.classes.Budget
-import spirit.realm.faefinance.data.classes.ETransactionInterval
+import spirit.realm.faefinance.data.classes.BudgetExpanded
 import java.util.*
 
 @Dao
 interface BudgetDao {
-    // Insert a new budget or update it if it already exists (using the primary key)
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(budget: Budget)
 
-    // Insert multiple budgets
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(budgets: List<Budget>)
+    suspend fun insert(budget: Budget): Int
 
-    // Update an existing budget
     @Update
     suspend fun update(budget: Budget)
 
-    // Delete a specific budget
     @Delete
     suspend fun delete(budget: Budget)
 
-    // Get a budget by its ID
+    // Retrieve a specific Budget by its ID
     @Query("SELECT * FROM budget WHERE id = :id")
-    suspend fun getBudgetById(id: Int): Budget?
+    fun getById(id: Int): Flow<Budget>
 
-    // Get all budgets for a specific currency, ordered by startDate
-    @Query("SELECT * FROM budget WHERE currency = :currency ORDER BY startDate ASC")
-    suspend fun getBudgetsByCurrency(currency: String): List<Budget>
-
-    // Get all budgets
+    // Retrieve all Budget records sorted by startDate in ascending order
     @Query("SELECT * FROM budget ORDER BY startDate ASC")
-    suspend fun getAllBudgets(): List<Budget>
+    fun getAll(): Flow<List<Budget>>
 
-    // Function to create the next budget based on the interval
+    // Retrieve all Budget records sorted by startDate in ascending order
+    @Query("SELECT * FROM budget WHERE budgetSet = :setId")
+    fun getAllInSet(setId: Int): Flow<List<Budget>>
+
+    // Update the amountSpent for Budget records that are associated with a specific BudgetCategory
+    @Query("""
+        UPDATE Budget 
+        SET amountSpent = amountSpent + :delta 
+        WHERE id = :id
+    """)
+    suspend fun updateAmountSpent(id: Int, delta: Double)
+
+    // Set the amountSpent for Budget records that are associated with a specific BudgetCategory
+    @Query("""
+        UPDATE Budget 
+        SET amountSpent = :amountSpent
+        WHERE id = :id
+    """)
+    suspend fun setAmountSpent(id: Int, amountSpent: Double)
+
+    // Retrieves all deferred Budgets based on date
+    @Query("SELECT * FROM Budget WHERE endDate <= :date AND intervalLength > 0")
+    fun getDeferredBudgets(date: Date = Date()): Flow<List<Budget>>
+
+    // Retrieve all Budget records that are associated with a specific category,
+    // and where the timestamp falls within the startDate and endDate range
     @Transaction
-    suspend fun createNext(currentBudget: Budget): Budget {
-        // Calculate the next budget's start and end dates
-        val calendar = Calendar.getInstance()
-        calendar.time = currentBudget.endDate
+    @Query("""
+        SELECT * FROM Budget 
+        WHERE :timestamp >= startDate 
+          AND :timestamp < endDate 
+          AND id IN (
+              SELECT budget FROM BudgetCategory WHERE category = :categoryId
+          )
+    """)
+    fun getWithCategory(timestamp: Date, categoryId: Int): Flow<List<Budget>>
 
-        // Apply the intervalLength to determine the next start and end dates
-        when (currentBudget.interval) {
-            ETransactionInterval.Days -> calendar.add(Calendar.DAY_OF_YEAR, currentBudget.intervalLength)
-            ETransactionInterval.Weeks -> calendar.add(Calendar.WEEK_OF_YEAR, currentBudget.intervalLength)
-            ETransactionInterval.Months -> calendar.add(Calendar.MONTH, currentBudget.intervalLength)
-        }
+    // Retrieve all Expanded Budget records that are associated with a specific category,
+    // and where the timestamp falls within the startDate and endDate range
+    @Transaction
+    @Query("""
+        SELECT * FROM Budget 
+        WHERE :timestamp >= startDate 
+          AND :timestamp < endDate 
+          AND id IN (
+              SELECT budget FROM BudgetCategory WHERE category = :categoryId
+          )
+    """)
+    fun getExpandedWithCategory(timestamp: Date, categoryId: Int): Flow<List<BudgetExpanded>>
 
-        val nextStartDate = calendar.time
-        calendar.add(Calendar.DAY_OF_YEAR, currentBudget.intervalLength)  // Calculate the end date
-        val nextEndDate = calendar.time
+    // Retrieve all Expanded Budget records
+    @Transaction
+    @Query("SELECT * FROM Budget")
+    fun getExpandedAll(): Flow<List<BudgetExpanded>>
 
-        // Create the new budget as a copy of the current one
-        val nextBudget = currentBudget.copy(
-            id = 0,  // Make sure to generate a new ID
-            startDate = nextStartDate,
-            endDate = nextEndDate,
-            amountSpent = 0.0
-        )
-
-        // Insert the new budget into the database
-        insert(nextBudget)
-
-        return nextBudget
-    }
+    // Retrieve Expanded Budget by id
+    @Transaction
+    @Query("SELECT * FROM Budget WHERE id = :id")
+    fun getExpandedById(id: Int): Flow<BudgetExpanded>
 }

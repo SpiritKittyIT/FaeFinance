@@ -1,10 +1,13 @@
 package spirit.realm.faefinance.data.daos
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 import spirit.realm.faefinance.data.classes.PeriodicTransaction
+import spirit.realm.faefinance.data.classes.PeriodicTransactionExpanded
 import java.util.*
 
 @Dao
 interface PeriodicTransactionDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(periodicTransaction: PeriodicTransaction)
 
@@ -14,7 +17,24 @@ interface PeriodicTransactionDao {
     @Delete
     suspend fun delete(periodicTransaction: PeriodicTransaction)
 
-    // Returns all periodic transactions where nextTransaction is in the past
-    @Query("SELECT * FROM PeriodicTransaction WHERE nextTransaction <= :now")
-    suspend fun getUnprocessedPeriodicTransactions(now: Date = Date()): List<PeriodicTransaction>
+    // Retrieves all unprocessed PeriodicTransactions based on date
+    @Query("""
+        DELETE FROM PeriodicTransaction
+        WHERE recipientAccount = :accountId OR recipientAccount = :accountId
+    """)
+    suspend fun deleteAllWithAccount(accountId: Int)
+
+    // Retrieves all unprocessed PeriodicTransactions based on date
+    @Query("SELECT * FROM PeriodicTransaction WHERE nextTransaction <= :date")
+    fun getUnprocessed(date: Date = Date()): Flow<List<PeriodicTransaction>>
+
+    // Retrieves Expanded PeriodicTransaction by its id
+    @Transaction
+    @Query("SELECT * FROM PeriodicTransaction WHERE id = :id")
+    fun getExpandedById(id: Int): Flow<PeriodicTransactionExpanded>
+
+    // Retrieves all Expanded PeriodicTransactions
+    @Transaction
+    @Query("SELECT * FROM PeriodicTransaction")
+    fun getExpandedAll(): Flow<List<PeriodicTransactionExpanded>>
 }

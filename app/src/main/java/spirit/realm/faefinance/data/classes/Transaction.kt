@@ -3,9 +3,16 @@ package spirit.realm.faefinance.data.classes
 import androidx.room.*
 import java.util.Date
 
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["senderAccount"]),
+        Index(value = ["recipientAccount"]),
+        Index(value = ["timestamp"]),
+        Index(value = ["category"])
+    ]
+)
 data class Transaction(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
     var type: ETransactionType,
     var title: String,
     var amount: Double,

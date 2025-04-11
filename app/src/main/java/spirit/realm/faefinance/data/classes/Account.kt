@@ -2,11 +2,15 @@ package spirit.realm.faefinance.data.classes
 
 import androidx.room.*
 
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["currency"])
+    ]
+)
 data class Account(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int,
     var title: String,
-    val currency: String, // ISO code
+    var currency: String, // ISO code
     var balance: Double,
     var color: String, // hex string
     var sortOrder: Int
