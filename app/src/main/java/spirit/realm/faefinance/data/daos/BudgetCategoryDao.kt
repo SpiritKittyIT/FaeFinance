@@ -21,5 +21,5 @@ interface BudgetCategoryDao {
 
     // Retrieve all BudgetCategories associated with a specific budgetId.
     @Query("SELECT * FROM BudgetCategory WHERE budget = :budgetId")
-    fun getAllForBudget(budgetId: Int): Flow<List<BudgetCategory>>
+    fun getAllForBudget(budgetId: Long): Flow<List<BudgetCategory>>
 }

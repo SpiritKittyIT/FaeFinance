@@ -6,9 +6,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import spirit.realm.faefinance.data.classes.Account
 import spirit.realm.faefinance.data.classes.Budget
 import spirit.realm.faefinance.data.classes.BudgetCategory
-import spirit.realm.faefinance.data.classes.BudgetExpanded
 import spirit.realm.faefinance.data.classes.Category
 import spirit.realm.faefinance.data.classes.PeriodicTransaction
 import spirit.realm.faefinance.data.classes.Transaction
@@ -21,9 +21,9 @@ import spirit.realm.faefinance.data.daos.TransactionDao
 
 @Database(
     entities = [
+        Account::class,
         Budget::class,
         BudgetCategory::class,
-        BudgetExpanded::class,
         Category::class,
         Transaction::class,
         PeriodicTransaction::class

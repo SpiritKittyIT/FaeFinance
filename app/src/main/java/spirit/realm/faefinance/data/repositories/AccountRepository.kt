@@ -14,7 +14,7 @@ interface IAccountRepository {
     suspend fun update(account: Account)
     suspend fun delete(account: Account)
     fun getAll(): Flow<List<Account>>
-    fun getById(id: Int): Flow<Account>
+    fun getById(id: Long): Flow<Account>
 }
 
 class AccountRepository(
@@ -56,7 +56,7 @@ class AccountRepository(
         return accountDao.getAll()
     }
 
-    override fun getById(id: Int): Flow<Account> {
+    override fun getById(id: Long): Flow<Account> {
         return accountDao.getById(id)
     }
 }

@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Fae Finance</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="nav_budgets">Budgets</string>
+    <string name="nav_periodic">Periodic</string>
+    <string name="nav_charts">Charts</string>
+    <string name="form_transaction">Transaction</string>
+    <string name="back">Back</string>
+    <string name="form_budget">Budget</string>
+    <string name="form_periodic">Periodic transaction</string>
+    <string name="menu">Menu</string>
+    <string name="default_account_title">All Accounts</string>
 </resources>

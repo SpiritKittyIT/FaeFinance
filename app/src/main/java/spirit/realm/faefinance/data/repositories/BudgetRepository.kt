@@ -20,15 +20,15 @@ interface IBudgetRepository {
     suspend fun create(budget: Budget)
     suspend fun update(budget: Budget)
     suspend fun delete(budget: Budget)
-    fun getById(id: Int): Flow<Budget>
+    fun getById(id: Long): Flow<Budget>
     fun getAll(): Flow<List<Budget>>
-    fun getAllInSet(setId: Int): Flow<List<Budget>>
+    fun getAllInSet(setId: Long): Flow<List<Budget>>
     suspend fun processDeferred()
 
     // Expanded
-    fun getExpandedWithCategory(timestamp: Date, categoryId: Int): Flow<List<BudgetExpanded>>
+    fun getExpandedWithCategory(timestamp: Date, categoryId: Long): Flow<List<BudgetExpanded>>
     fun getExpandedAll(): Flow<List<BudgetExpanded>>
-    fun getExpandedById(id: Int): Flow<BudgetExpanded>
+    fun getExpandedById(id: Long): Flow<BudgetExpanded>
     suspend fun createExpanded(budgetExpanded: BudgetExpanded)
     suspend fun updateExpanded(budgetExpanded: BudgetExpanded)
 }
@@ -39,7 +39,7 @@ class BudgetRepository(
     private val transactionDao: TransactionDao = db.transactionDao(),
     private val budgetCategoryDao: BudgetCategoryDao = db.budgetCategoryDao()
 ) : IBudgetRepository {
-    private suspend fun recalculateAmountSpent(id: Int) {
+    private suspend fun recalculateAmountSpent(id: Long) {
         val budgetExpanded = budgetDao.getExpandedById(id).first()
 
         var amountSpent = 0.0
@@ -105,7 +105,7 @@ class BudgetRepository(
     override suspend fun create(budget: Budget) {
         db.withTransaction {
             val id = budgetDao.insert(budget)
-            if (budget.budgetSet == 0) {
+            if (budget.budgetSet == 0L) {
                 val updatedBudget = budget.copy(
                     id = id,
                     budgetSet = id
@@ -127,7 +127,7 @@ class BudgetRepository(
         budgetDao.delete(budget)
     }
 
-    override fun getById(id: Int): Flow<Budget> {
+    override fun getById(id: Long): Flow<Budget> {
         return budgetDao.getById(id)
     }
 
@@ -135,7 +135,7 @@ class BudgetRepository(
         return budgetDao.getAll()
     }
 
-    override fun getAllInSet(setId: Int): Flow<List<Budget>> {
+    override fun getAllInSet(setId: Long): Flow<List<Budget>> {
         return budgetDao.getAllInSet(setId)
     }
 
@@ -149,7 +149,7 @@ class BudgetRepository(
 
     // Expanded
 
-    override fun getExpandedWithCategory(timestamp: Date, categoryId: Int): Flow<List<BudgetExpanded>> {
+    override fun getExpandedWithCategory(timestamp: Date, categoryId: Long): Flow<List<BudgetExpanded>> {
         return budgetDao.getExpandedWithCategory(timestamp, categoryId)
     }
 
@@ -157,7 +157,7 @@ class BudgetRepository(
         return budgetDao.getExpandedAll()
     }
 
-    override fun getExpandedById(id: Int): Flow<BudgetExpanded> {
+    override fun getExpandedById(id: Long): Flow<BudgetExpanded> {
         return budgetDao.getExpandedById(id)
     }
 

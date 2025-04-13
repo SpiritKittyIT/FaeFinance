@@ -17,14 +17,14 @@ interface AccountDao {
     suspend fun delete(account: Account)
 
     // Update the balance for an Account by a given delta (increase or decrease)
-    @Query("UPDATE Account SET balance = balance + :delta WHERE id = :accountId")
-    suspend fun updateBalance(accountId: Int, delta: Double)
+    @Query("UPDATE Account SET balance = balance + :delta WHERE id = :id")
+    suspend fun updateBalance(id: Long, delta: Double)
 
     // Retrieve all Accounts, ordered by the 'sortOrder' column
-    @Query("SELECT * FROM account ORDER BY sortOrder ASC")
+    @Query("SELECT * FROM Account ORDER BY sortOrder ASC")
     fun getAll(): Flow<List<Account>>
 
     // Retrieve a specific Account by its ID
-    @Query("SELECT * FROM account WHERE id = :id")
-    fun getById(id: Int): Flow<Account>
+    @Query("SELECT * FROM Account WHERE id = :id")
+    fun getById(id: Long): Flow<Account>
 }

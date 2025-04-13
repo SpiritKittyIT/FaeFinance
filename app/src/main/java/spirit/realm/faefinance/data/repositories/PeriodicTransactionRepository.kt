@@ -16,7 +16,7 @@ interface IPeriodicTransactionRepository {
     suspend fun process(periodicTransaction: PeriodicTransaction)
     suspend fun processAllUnprocessed()
 
-    fun getExpandedById(id: Int): Flow<PeriodicTransactionExpanded>
+    fun getExpandedById(id: Long): Flow<PeriodicTransactionExpanded>
     fun getExpandedAll(): Flow<List<PeriodicTransactionExpanded>>
 }
 
@@ -86,7 +86,7 @@ class PeriodicTransactionRepository(
         }
     }
 
-    override fun getExpandedById(id: Int): Flow<PeriodicTransactionExpanded> {
+    override fun getExpandedById(id: Long): Flow<PeriodicTransactionExpanded> {
         return periodicTransactionDao.getExpandedById(id)
     }
 

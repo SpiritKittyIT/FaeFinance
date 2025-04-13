@@ -8,7 +8,7 @@ import androidx.room.*
     ]
 )
 data class Account(
-    @PrimaryKey(autoGenerate = true) val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     var title: String,
     var currency: String, // ISO code
     var balance: Double,

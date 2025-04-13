@@ -19,14 +19,14 @@ interface TransactionDao {
 
     // Retrieves a Transaction by its id
     @Query("SELECT * FROM `Transaction` WHERE id = :id")
-    fun getById(id: Int): Flow<DataTransaction>
+    fun getById(id: Long): Flow<DataTransaction>
 
     // Retrieves all Transactions made by
     @Query("""
         select * FROM `Transaction` 
         WHERE senderAccount = :accountId
     """)
-    fun getAllByAccount(accountId: Int): Flow<List<DataTransaction>>
+    fun getAllByAccount(accountId: Long): Flow<List<DataTransaction>>
 
     // Retrieves all Transactions with category in a time interval
     @Query("""
@@ -34,7 +34,7 @@ interface TransactionDao {
         WHERE category = :categoryId
         AND timestamp >= :after AND timestamp < :before
     """)
-    fun getAllWithCategory(categoryId: Int, after: Date, before: Date): Flow<List<DataTransaction>>
+    fun getAllWithCategory(categoryId: Long, after: Date, before: Date): Flow<List<DataTransaction>>
 
     // Retrieves all Expanded Transactions for an account, filtered by the sender or recipient account
     // Results are sorted by timestamp in descending order
@@ -44,5 +44,5 @@ interface TransactionDao {
         WHERE (:accountId = 0 OR senderAccount = :accountId) 
         ORDER BY timestamp DESC
     """)
-    fun getExpandedAllByAccount(accountId: Int): Flow<List<TransactionExpanded>>
+    fun getExpandedAllByAccount(accountId: Long): Flow<List<TransactionExpanded>>
 }

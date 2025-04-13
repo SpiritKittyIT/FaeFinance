@@ -9,7 +9,7 @@ import java.util.*
 interface BudgetDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(budget: Budget): Int
+    suspend fun insert(budget: Budget): Long
 
     @Update
     suspend fun update(budget: Budget)
@@ -18,16 +18,16 @@ interface BudgetDao {
     suspend fun delete(budget: Budget)
 
     // Retrieve a specific Budget by its ID
-    @Query("SELECT * FROM budget WHERE id = :id")
-    fun getById(id: Int): Flow<Budget>
+    @Query("SELECT * FROM Budget WHERE id = :id")
+    fun getById(id: Long): Flow<Budget>
 
     // Retrieve all Budget records sorted by startDate in ascending order
-    @Query("SELECT * FROM budget ORDER BY startDate ASC")
+    @Query("SELECT * FROM Budget ORDER BY startDate ASC")
     fun getAll(): Flow<List<Budget>>
 
     // Retrieve all Budget records sorted by startDate in ascending order
-    @Query("SELECT * FROM budget WHERE budgetSet = :setId")
-    fun getAllInSet(setId: Int): Flow<List<Budget>>
+    @Query("SELECT * FROM Budget WHERE budgetSet = :setId")
+    fun getAllInSet(setId: Long): Flow<List<Budget>>
 
     // Update the amountSpent for Budget records that are associated with a specific BudgetCategory
     @Query("""
@@ -35,7 +35,7 @@ interface BudgetDao {
         SET amountSpent = amountSpent + :delta 
         WHERE id = :id
     """)
-    suspend fun updateAmountSpent(id: Int, delta: Double)
+    suspend fun updateAmountSpent(id: Long, delta: Double)
 
     // Set the amountSpent for Budget records that are associated with a specific BudgetCategory
     @Query("""
@@ -43,7 +43,7 @@ interface BudgetDao {
         SET amountSpent = :amountSpent
         WHERE id = :id
     """)
-    suspend fun setAmountSpent(id: Int, amountSpent: Double)
+    suspend fun setAmountSpent(id: Long, amountSpent: Double)
 
     // Retrieves all deferred Budgets based on date
     @Query("SELECT * FROM Budget WHERE endDate <= :date AND intervalLength > 0")
@@ -60,7 +60,7 @@ interface BudgetDao {
               SELECT budget FROM BudgetCategory WHERE category = :categoryId
           )
     """)
-    fun getWithCategory(timestamp: Date, categoryId: Int): Flow<List<Budget>>
+    fun getWithCategory(timestamp: Date, categoryId: Long): Flow<List<Budget>>
 
     // Retrieve all Expanded Budget records that are associated with a specific category,
     // and where the timestamp falls within the startDate and endDate range
@@ -73,7 +73,7 @@ interface BudgetDao {
               SELECT budget FROM BudgetCategory WHERE category = :categoryId
           )
     """)
-    fun getExpandedWithCategory(timestamp: Date, categoryId: Int): Flow<List<BudgetExpanded>>
+    fun getExpandedWithCategory(timestamp: Date, categoryId: Long): Flow<List<BudgetExpanded>>
 
     // Retrieve all Expanded Budget records
     @Transaction
@@ -83,5 +83,5 @@ interface BudgetDao {
     // Retrieve Expanded Budget by id
     @Transaction
     @Query("SELECT * FROM Budget WHERE id = :id")
-    fun getExpandedById(id: Int): Flow<BudgetExpanded>
+    fun getExpandedById(id: Long): Flow<BudgetExpanded>
 }

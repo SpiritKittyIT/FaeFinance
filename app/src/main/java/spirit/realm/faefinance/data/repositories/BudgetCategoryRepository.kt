@@ -9,7 +9,7 @@ interface IBudgetCategoryRepository {
     suspend fun insertAll(budgetCategories: List<BudgetCategory>)
     suspend fun delete(budgetCategory: BudgetCategory)
     suspend fun deleteAll(budgetCategories: List<BudgetCategory>)
-    fun getAllForBudget(budgetId: Int): Flow<List<BudgetCategory>>
+    fun getAllForBudget(budgetId: Long): Flow<List<BudgetCategory>>
 }
 
 class BudgetCategoryRepository(
@@ -32,7 +32,7 @@ class BudgetCategoryRepository(
         budgetCategoryDao.deleteAll(budgetCategories)
     }
 
-    override fun getAllForBudget(budgetId: Int): Flow<List<BudgetCategory>> {
+    override fun getAllForBudget(budgetId: Long): Flow<List<BudgetCategory>> {
         return budgetCategoryDao.getAllForBudget(budgetId)
     }
 }

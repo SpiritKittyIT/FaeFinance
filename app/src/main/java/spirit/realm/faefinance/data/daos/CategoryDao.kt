@@ -21,7 +21,7 @@ interface CategoryDao {
 
     // Retrieves a Category by its id
     @Query("SELECT * FROM Category WHERE id = :id")
-    fun getById(id: Int): Flow<Category>
+    fun getById(id: Long): Flow<Category>
 
     // Retrieves all Category records from the database, ordered by title in ascending order
     @Query("SELECT * FROM Category ORDER BY title ASC")

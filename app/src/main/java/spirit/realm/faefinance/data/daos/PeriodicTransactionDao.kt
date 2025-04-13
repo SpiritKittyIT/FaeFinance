@@ -22,7 +22,7 @@ interface PeriodicTransactionDao {
         DELETE FROM PeriodicTransaction
         WHERE recipientAccount = :accountId OR recipientAccount = :accountId
     """)
-    suspend fun deleteAllWithAccount(accountId: Int)
+    suspend fun deleteAllWithAccount(accountId: Long)
 
     // Retrieves all unprocessed PeriodicTransactions based on date
     @Query("SELECT * FROM PeriodicTransaction WHERE nextTransaction <= :date")
@@ -31,7 +31,7 @@ interface PeriodicTransactionDao {
     // Retrieves Expanded PeriodicTransaction by its id
     @Transaction
     @Query("SELECT * FROM PeriodicTransaction WHERE id = :id")
-    fun getExpandedById(id: Int): Flow<PeriodicTransactionExpanded>
+    fun getExpandedById(id: Long): Flow<PeriodicTransactionExpanded>
 
     // Retrieves all Expanded PeriodicTransactions
     @Transaction

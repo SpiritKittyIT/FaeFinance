@@ -8,7 +8,7 @@ import androidx.room.*
     ]
 )
 data class Category(
-    @PrimaryKey(autoGenerate = true) val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     val title: String,
     val symbol: String
 )

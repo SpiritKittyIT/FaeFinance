@@ -10,8 +10,8 @@ import java.util.Date
     ]
 )
 data class Budget(
-    @PrimaryKey(autoGenerate = true) val id: Int,
-    var budgetSet: Int = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long,
+    var budgetSet: Long = 0,
     var title: String,
     val currency: String, // ISO code
     var amount: Double,

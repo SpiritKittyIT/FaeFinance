@@ -19,8 +19,8 @@ interface ITransactionRepository {
     suspend fun update(transaction: DataTransaction)
     suspend fun delete(transaction: DataTransaction)
     suspend fun process(transaction: DataTransaction)
-    suspend fun deleteAllByAccount(accountId: Int)
-    fun getExpandedAllByAccountGrouped(accountId: Int): Flow<Map<TransactionGroup, List<TransactionExpanded>>>
+    suspend fun deleteAllByAccount(accountId: Long)
+    fun getExpandedAllByAccountGrouped(accountId: Long): Flow<Map<TransactionGroup, List<TransactionExpanded>>>
 }
 
 class TransactionRepository(
@@ -156,7 +156,7 @@ class TransactionRepository(
         }
     }
 
-    override suspend fun deleteAllByAccount(accountId: Int) {
+    override suspend fun deleteAllByAccount(accountId: Long) {
         val transactions = transactionDao.getAllByAccount(accountId).first()
 
         for (transaction in transactions) {
@@ -164,7 +164,7 @@ class TransactionRepository(
         }
     }
 
-    override fun getExpandedAllByAccountGrouped(accountId: Int): Flow<Map<TransactionGroup, List<TransactionExpanded>>> {
+    override fun getExpandedAllByAccountGrouped(accountId: Long): Flow<Map<TransactionGroup, List<TransactionExpanded>>> {
         return transactionDao.getExpandedAllByAccount(accountId).map { list ->
             list.groupBy {
                 val cal = Calendar.getInstance().apply { time = it.transaction.timestamp }
