@@ -1,3 +1,6 @@
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.toColorInt
 import androidx.room.TypeConverter
 import java.util.Date
 import spirit.realm.faefinance.data.classes.ETransactionInterval
@@ -35,5 +38,16 @@ class Converters {
     @TypeConverter
     fun intervalToString(interval: ETransactionInterval): String {
         return interval.name
+    }
+
+    @TypeConverter
+    fun colorToString(color: Color): String {
+        val argb = color.toArgb()
+        return String.format("#%06X", argb and 0xFFFFFF)
+    }
+
+    @TypeConverter
+    fun stringToColor(value: String): Color {
+        return Color(value.toColorInt())
     }
 }

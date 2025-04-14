@@ -10,6 +10,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
@@ -26,7 +28,8 @@ fun TopAppBar(
     accountTitle: String?,
     accountBalance: String,
     navController: NavController,
-    drawerState: DrawerState
+    drawerState: DrawerState,
+    submitFunction: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -54,7 +57,10 @@ fun TopAppBar(
                     accountBalance,
                     style = MaterialTheme.typography.titleLarge
                 )
-            }
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
         )
     }
     else {
@@ -76,7 +82,22 @@ fun TopAppBar(
                         contentDescription = stringResource(R.string.back)
                     )
                 }
-            }
+            },
+            actions = {
+                TextButton(
+                    onClick = {
+                        submitFunction()
+                    }
+                ) {
+                    Text(
+                        stringResource(R.string.confirm),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
         )
     }
 }

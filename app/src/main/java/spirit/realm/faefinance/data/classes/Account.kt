@@ -1,5 +1,6 @@
 package spirit.realm.faefinance.data.classes
 
+import androidx.compose.ui.graphics.Color
 import androidx.room.*
 
 @Entity(
@@ -8,10 +9,10 @@ import androidx.room.*
     ]
 )
 data class Account(
-    @PrimaryKey(autoGenerate = true) val id: Long,
-    var title: String,
-    var currency: String, // ISO code
-    var balance: Double,
-    var color: String, // hex string
-    var sortOrder: Int
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    var title: String = "",
+    var currency: String = "", // ISO code
+    var balance: Double = 0.0,
+    var color: Color = Color.White,
+    var sortOrder: Long = Long.MAX_VALUE
 )

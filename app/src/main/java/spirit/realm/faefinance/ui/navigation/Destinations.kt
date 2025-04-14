@@ -20,6 +20,7 @@ sealed class Screen(val route: String) {
     object Periodic : Screen(MainScreen.Periodic.route)
     object Charts : Screen(MainScreen.Charts.route)
 
+    object AccountForm: Screen("account_form")
     object TransactionForm : Screen("transaction_form")
     object BudgetForm : Screen("budget_form")
     object PeriodicForm : Screen("periodic_form")
