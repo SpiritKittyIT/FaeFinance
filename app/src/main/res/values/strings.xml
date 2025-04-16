@@ -26,4 +26,6 @@
     <string name="balance">Balance</string>
     <string name="valid_number_for_balance">Please enter a valid number for balance\n</string>
     <string name="select_a_valid_color">Please select a valid color\n</string>
+    <string name="currency">Currency</string>
+    <string name="ok">OK</string>
 </resources>

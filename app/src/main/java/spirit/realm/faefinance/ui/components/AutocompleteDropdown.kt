@@ -16,8 +16,8 @@ import androidx.compose.ui.text.input.KeyboardType
 class Choice(
     val title: String,
     val value: String,
-    val leading: @Composable (() -> Unit)? = null,
-    val trailing: @Composable (() -> Unit)? = null
+    val leading: String = "",
+    val trailing: String = ""
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +26,8 @@ fun AutocompleteDropdown(
     label: String,
     choices: List<Choice>,
     selected: Choice,
-    onSelect: (Choice) -> Unit
+    onSelect: (Choice) -> Unit,
+    modifier: Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf(selected.title) }
@@ -34,6 +35,7 @@ fun AutocompleteDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
+        modifier = modifier,
     ) {
         OutlinedTextField(
             value = query,
@@ -45,7 +47,8 @@ fun AutocompleteDropdown(
                     enabled = true,
                     type = MenuAnchorType.PrimaryEditable,
                 ),
-            trailingIcon = selected.trailing,
+            leadingIcon = if (selected.leading != "") { { Text(selected.leading) } } else { null },
+            trailingIcon = if (selected.trailing != "") { { Text(selected.trailing) } } else { null },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
             ),
@@ -65,8 +68,8 @@ fun AutocompleteDropdown(
                             onSelect(choice)
                             expanded = false
                         },
-                        leadingIcon = { choice.leading?.invoke() },
-                        trailingIcon = { choice.trailing?.invoke() }
+                        leadingIcon = if (selected.leading != "") { { Text(selected.leading) } } else { null },
+                        trailingIcon = if (selected.trailing != "") { { Text(selected.trailing) } } else { null },
                     )
                 }
         }
