@@ -18,7 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import spirit.realm.faefinance.R
-import spirit.realm.faefinance.ui.navigation.Screen
+import spirit.realm.faefinance.ui.screens.AccountFormDestination
+import spirit.realm.faefinance.ui.screens.BudgetFormDestination
+import spirit.realm.faefinance.ui.screens.PeriodicFormDestination
+import spirit.realm.faefinance.ui.screens.TransactionFormDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,9 +71,10 @@ fun TopAppBar(
             title = {
                 Text(
                     when (currentRoute) {
-                        Screen.TransactionForm.route -> stringResource(R.string.form_transaction)
-                        Screen.BudgetForm.route -> stringResource(R.string.form_budget)
-                        Screen.PeriodicForm.route -> stringResource(R.string.form_periodic)
+                        AccountFormDestination.routeWithArgs -> stringResource(R.string.form_account)
+                        TransactionFormDestination.routeWithArgs -> stringResource(R.string.form_transaction)
+                        BudgetFormDestination.routeWithArgs -> stringResource(R.string.form_budget)
+                        PeriodicFormDestination.routeWithArgs -> stringResource(R.string.form_periodic)
                         else -> ""
                     }
                 )

@@ -13,7 +13,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import spirit.realm.faefinance.data.SettingsDataStore
 import spirit.realm.faefinance.ui.screens.BudgetFormScreen
 import spirit.realm.faefinance.ui.screens.BudgetsScreen
 import spirit.realm.faefinance.ui.screens.ChartsScreen
@@ -21,49 +20,59 @@ import spirit.realm.faefinance.ui.screens.PeriodicFormScreen
 import spirit.realm.faefinance.ui.screens.PeriodicScreen
 import spirit.realm.faefinance.ui.screens.TransactionFormScreen
 import spirit.realm.faefinance.ui.screens.TransactionsScreen
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import spirit.realm.faefinance.DatabaseApplication
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import kotlinx.coroutines.launch
 import spirit.realm.faefinance.ui.components.BottomAppBar
 import spirit.realm.faefinance.ui.components.DrawerContent
 import spirit.realm.faefinance.ui.components.TopAppBar
+import spirit.realm.faefinance.ui.screens.AccountFormDestination
 import spirit.realm.faefinance.ui.screens.AccountFormScreen
+import spirit.realm.faefinance.ui.screens.BudgetFormDestination
+import spirit.realm.faefinance.ui.screens.BudgetsDestination
+import spirit.realm.faefinance.ui.screens.ChartsDestination
+import spirit.realm.faefinance.ui.screens.PeriodicDestination
+import spirit.realm.faefinance.ui.screens.PeriodicFormDestination
+import spirit.realm.faefinance.ui.screens.TransactionFormDestination
+import spirit.realm.faefinance.ui.screens.TransactionsDestination
 import spirit.realm.faefinance.ui.viewmodels.AppNavigationViewModel
-import spirit.realm.faefinance.ui.viewmodels.ViewModelFactoryProvider
+import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 
 @Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
+fun AppNavigation(
+    viewModel: AppNavigationViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navController: NavHostController = rememberNavController()
+) {
+    val scope = rememberCoroutineScope()
+
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = currentBackStackEntry?.destination
-    val currentRoute = currentDestination?.route
-
-    val context = LocalContext.current
-    val settings = SettingsDataStore(context)
-
-    val app = context.applicationContext as DatabaseApplication
-
-    // State to hold the account info
-    val viewModel: AppNavigationViewModel = viewModel(
-        factory = ViewModelFactoryProvider.provideAppNavigationViewModel(app, settings)
-    )
+    val currentRoute = currentBackStackEntry?.destination?.route
 
     val state by viewModel.state.collectAsState()
-    val formsState by viewModel.formsState.collectAsState()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val showBottomBar = currentRoute in listOf(
-        Screen.Transactions.route,
-        Screen.Budgets.route,
-        Screen.Periodic.route,
-        Screen.Charts.route
+        TransactionsDestination.route,
+        BudgetsDestination.route,
+        PeriodicDestination.route,
+        ChartsDestination.route
     )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            DrawerContent(navController, drawerState, viewModel)
+            DrawerContent(
+                navigateToAccountForm = {
+                    scope.launch {
+                        drawerState.close()
+                    }
+                    navController.navigate("${AccountFormDestination.route}/$it")
+                },
+                navigationViewModel = viewModel
+            )
         }
     ) {
         Scaffold(
@@ -75,7 +84,7 @@ fun AppNavigation() {
                     accountBalance = state.accountBalance,
                     navController = navController,
                     drawerState = drawerState,
-                    submitFunction = formsState.formSubmit
+                    submitFunction = state.formSubmit
                 )
             },
             bottomBar = {
@@ -89,21 +98,57 @@ fun AppNavigation() {
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = MainScreen.Transactions.route,
+                startDestination = TransactionsDestination.route,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                composable(Screen.Transactions.route) { TransactionsScreen() }
-                composable(Screen.Budgets.route) { BudgetsScreen() }
-                composable(Screen.Periodic.route) { PeriodicScreen() }
-                composable(Screen.Charts.route) { ChartsScreen() }
+                composable(TransactionsDestination.route) { TransactionsScreen() }
+                composable(BudgetsDestination.route) { BudgetsScreen() }
+                composable(PeriodicDestination.route) { PeriodicScreen() }
+                composable(ChartsDestination.route) { ChartsScreen() }
 
                 // Form screens
-                composable(Screen.AccountForm.route) { AccountFormScreen(navController, app, formsState.formAccount, viewModel::setFormSubmitAction) }
-                composable(Screen.TransactionForm.route) { TransactionFormScreen() }
-                composable(Screen.BudgetForm.route) { BudgetFormScreen() }
-                composable(Screen.PeriodicForm.route) { PeriodicFormScreen() }
+                composable(
+                    AccountFormDestination.routeWithArgs,
+                    arguments = listOf(navArgument(AccountFormDestination.ID_ARG) {
+                        type = NavType.LongType
+                    })
+                ) {
+                    AccountFormScreen(
+                        navigateBack = { navController.popBackStack() },
+                        setFormSubmit = viewModel::setFormSubmitAction)
+                }
+                composable(
+                    TransactionFormDestination.routeWithArgs,
+                    arguments = listOf(navArgument(TransactionFormDestination.ID_ARG) {
+                        type = NavType.LongType
+                    })
+                ) {
+                    TransactionFormScreen(
+                        navigateBack = { navController.popBackStack() },
+                        setFormSubmit = viewModel::setFormSubmitAction)
+                }
+                composable(
+                    BudgetFormDestination.routeWithArgs,
+                    arguments = listOf(navArgument(BudgetFormDestination.ID_ARG) {
+                        type = NavType.LongType
+                    })
+                ) {
+                    BudgetFormScreen(
+                        navigateBack = { navController.popBackStack() },
+                        setFormSubmit = viewModel::setFormSubmitAction)
+                }
+                composable(
+                    PeriodicFormDestination.routeWithArgs,
+                    arguments = listOf(navArgument(PeriodicFormDestination.ID_ARG) {
+                        type = NavType.LongType
+                    })
+                ) {
+                    PeriodicFormScreen(
+                        navigateBack = { navController.popBackStack() },
+                        setFormSubmit = viewModel::setFormSubmitAction)
+                }
             }
         }
     }

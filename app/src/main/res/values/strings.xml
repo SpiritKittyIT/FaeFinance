@@ -28,4 +28,5 @@
     <string name="select_a_valid_color">Please select a valid color\n</string>
     <string name="currency">Currency</string>
     <string name="ok">OK</string>
+    <string name="form_account">Account</string>
 </resources>

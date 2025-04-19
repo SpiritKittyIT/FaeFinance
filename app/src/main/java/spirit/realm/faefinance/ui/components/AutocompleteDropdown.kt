@@ -30,7 +30,7 @@ fun AutocompleteDropdown(
     modifier: Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var query by remember { mutableStateOf(selected.title) }
+    var query by remember(selected.title) { mutableStateOf(selected.title) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,

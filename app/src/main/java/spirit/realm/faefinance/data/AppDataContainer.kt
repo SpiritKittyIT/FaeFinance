@@ -7,6 +7,7 @@ import android.content.Context
  * App container for Dependency injection.
  */
 interface IAppDataContainer {
+    val settings: SettingsDataStore
     val accountRepository: AccountRepository
     val budgetCategoryRepository: BudgetCategoryRepository
     val budgetRepository: BudgetRepository
@@ -20,6 +21,8 @@ interface IAppDataContainer {
  */
 class AppDataContainer(context: Context) : IAppDataContainer {
     private val appDatabase = AppDatabase.getDatabase(context)
+
+    override val settings = SettingsDataStore(context)
 
     override val budgetCategoryRepository: BudgetCategoryRepository = BudgetCategoryRepository(appDatabase.budgetCategoryDao())
     override val budgetRepository: BudgetRepository = BudgetRepository(appDatabase)

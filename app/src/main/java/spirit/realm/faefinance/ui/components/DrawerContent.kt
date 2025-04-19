@@ -33,19 +33,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import spirit.realm.faefinance.R
 import spirit.realm.faefinance.data.classes.Account
-import androidx.navigation.NavController
-import kotlinx.coroutines.launch
-import spirit.realm.faefinance.ui.navigation.Screen
 import spirit.realm.faefinance.ui.viewmodels.AppNavigationViewModel
 
 @Composable
 fun DrawerContent(
-    navController: NavController,
-    drawerState: DrawerState,
+    navigateToAccountForm: (Long) -> Unit,
     navigationViewModel: AppNavigationViewModel
 ) {
-    val scope = rememberCoroutineScope()
-
     val state by navigationViewModel.state.collectAsState()
 
     var localAccounts by remember(state.accounts) {
@@ -65,14 +59,6 @@ fun DrawerContent(
     val onDragEnd = {
         navigationViewModel.updateAccountOrder(localAccounts)
         draggedIndex = -1
-    }
-
-    val launchAccountForm: (Account) -> Unit = { formAccount ->
-        navigationViewModel.setFormAccount(formAccount)
-        scope.launch {
-            drawerState.close()
-        }
-        navController.navigate(Screen.AccountForm.route)
     }
 
     val allAccount = Account(
@@ -141,7 +127,7 @@ fun DrawerContent(
                     account = allAccount,
                     activeAccountId = state.activeAccountId,
                     onAccountSelected = navigationViewModel::updateActiveAccount,
-                    launchAccountForm = launchAccountForm,
+                    navigateToAccountForm = navigateToAccountForm,
                     modifier = Modifier.fillMaxWidth()
                 )
                 LazyColumn (
@@ -153,7 +139,7 @@ fun DrawerContent(
                             account = account,
                             activeAccountId = state.activeAccountId,
                             onAccountSelected = navigationViewModel::updateActiveAccount,
-                            launchAccountForm = launchAccountForm,
+                            navigateToAccountForm = navigateToAccountForm,
                             onMove = onMove,
                             onDragEnd = onDragEnd,
                             modifier = Modifier
@@ -167,7 +153,7 @@ fun DrawerContent(
                 ) {
                     Button(
                         onClick = {
-                            launchAccountForm(Account())
+                            navigateToAccountForm(0L)
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

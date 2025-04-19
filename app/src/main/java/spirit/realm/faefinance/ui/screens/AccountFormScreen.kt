@@ -19,26 +19,30 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import spirit.realm.faefinance.DatabaseApplication
-import spirit.realm.faefinance.data.classes.Account
 import spirit.realm.faefinance.ui.components.AutocompleteDropdown
 import spirit.realm.faefinance.R
 import spirit.realm.faefinance.ui.components.ColorHexField
+import spirit.realm.faefinance.ui.navigation.NavigationDestination
 import spirit.realm.faefinance.ui.viewmodels.AccountFormViewModel
-import spirit.realm.faefinance.ui.viewmodels.ViewModelFactoryProvider
+import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
+
+object AccountFormDestination : NavigationDestination {
+    override val route = "account_form"
+    const val ID_ARG = "id"
+    val routeWithArgs = "$route/{$ID_ARG}"
+}
 
 @Composable
-fun AccountFormScreen(navController: NavController, app: DatabaseApplication, formAccount: Account, setFormSubmit: (() -> Unit) -> Unit) {
-    val viewModel: AccountFormViewModel = viewModel(
-        factory = ViewModelFactoryProvider.provideAccountFormViewModel(app, formAccount)
-    )
-
+fun AccountFormScreen(
+    navigateBack: () -> Unit,
+    setFormSubmit: (() -> Unit) -> Unit,
+    viewModel: AccountFormViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(state.isSubmitSuccessful) {
         if (state.isSubmitSuccessful) {
-            navController.popBackStack()
+            navigateBack()
         }
     }
 
@@ -90,8 +94,7 @@ fun AccountFormScreen(navController: NavController, app: DatabaseApplication, fo
             onColorChange = viewModel::updateColor,
             modifier = Modifier.fillMaxWidth()
         )
-        // Delete Button, only visible if it's an existing account (id != 0)
-        if (formAccount.id != 0L) {
+        if (state.isDeleteVisible) {
             Button(
                 onClick = viewModel::triggerDeleteDialog,
                 modifier = Modifier.fillMaxWidth()

@@ -15,11 +15,7 @@ data class AppNavigationState(
     val accountBalance: String = "",
     val accounts: List<Account> = emptyList<Account>(),
     val isDarkTheme: Boolean = false,
-)
-
-data class FormsState(
     val formSubmit: () -> Unit = {},
-    val formAccount: Account = Account()
 )
 
 class AppNavigationViewModel(
@@ -29,9 +25,6 @@ class AppNavigationViewModel(
 
     private val _state = MutableStateFlow(AppNavigationState())
     val state: StateFlow<AppNavigationState> = _state.asStateFlow()
-
-    private val _formsState = MutableStateFlow(FormsState())
-    val formsState: StateFlow<FormsState> = _formsState.asStateFlow()
 
     init {
         initAccounts()
@@ -114,10 +107,6 @@ class AppNavigationViewModel(
     }
 
     fun setFormSubmitAction(action: () -> Unit) {
-        _formsState.update { it.copy(formSubmit = action) }
-    }
-
-    fun setFormAccount(formAccount: Account) {
-        _formsState.update { it.copy(formAccount = formAccount) }
+        _state.update { it.copy(formSubmit = action) }
     }
 }

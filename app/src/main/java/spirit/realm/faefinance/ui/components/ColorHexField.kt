@@ -28,7 +28,7 @@ fun ColorHexField(
     modifier: Modifier = Modifier
 ) {
     val converter = Converters()
-    var hexText by remember { mutableStateOf(converter.colorToString(color)) }
+    var hexText by remember(color) { mutableStateOf(converter.colorToString(color)) }
     var isError by remember { mutableStateOf(false) }
     val validColorRegex = remember { Regex("^#[0-9a-fA-F]{6}$") }
 

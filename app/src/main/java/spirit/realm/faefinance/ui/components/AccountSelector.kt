@@ -4,10 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -28,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -45,7 +41,7 @@ fun AccountSelector(
     account: Account,
     activeAccountId: Long,
     onAccountSelected: (Long) -> Unit,
-    launchAccountForm: (Account) -> Unit,
+    navigateToAccountForm: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row (
@@ -75,7 +71,7 @@ fun AccountSelector(
                 Icons.Default.Edit,
                 contentDescription = stringResource(R.string.edit),
                 modifier = Modifier.clickable {
-                    launchAccountForm(account)
+                    navigateToAccountForm(account.id)
                 }
             )
         }
@@ -100,7 +96,7 @@ fun DraggableAccountSelector(
     account: Account,
     activeAccountId: Long,
     onAccountSelected: (Long) -> Unit,
-    launchAccountForm: (Account) -> Unit,
+    navigateToAccountForm: (Long) -> Unit,
     onMove: (fromIndex: Int, toIndex: Int) -> Unit,
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier
@@ -116,7 +112,7 @@ fun DraggableAccountSelector(
         account = account,
         activeAccountId = activeAccountId,
         onAccountSelected = onAccountSelected,
-        launchAccountForm = launchAccountForm,
+        navigateToAccountForm = navigateToAccountForm,
         modifier = modifier
             .zIndex(if (isDragging) 1f else 0f)
             .alpha(if (isDragging) 0.5f else 1f)

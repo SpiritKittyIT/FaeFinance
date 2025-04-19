@@ -1,12 +1,13 @@
 package spirit.realm.faefinance.ui.viewmodels
 
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import spirit.realm.faefinance.data.classes.Account
-import spirit.realm.faefinance.DatabaseApplication
+import spirit.realm.faefinance.data.repositories.AccountRepository
 import spirit.realm.faefinance.ui.components.Choice
 import java.util.*
 
@@ -18,34 +19,48 @@ data class AccountFormState(
     val errorMessage: String? = null,
     val isSubmitSuccessful: Boolean = false,
     val showErrorDialog: Boolean = false,
-    val showDeleteDialog: Boolean = false
+    val showDeleteDialog: Boolean = false,
+    val isDeleteVisible: Boolean = false
 )
 
 class AccountFormViewModel(
-    private val app: DatabaseApplication,
-    private val formAccount: Account
+    savedStateHandle: SavedStateHandle,
+    private val accountRepository: AccountRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AccountFormState(
-        title = formAccount.title,
-        currencyChoice = if (formAccount.currency == "") {
-            Choice(
-                title = "",
-                value = ""
-            )
-        }
-        else {
-            val currency = Currency.getInstance(formAccount.currency)
-            Choice(
-                title = currency.displayName,
-                value = currency.currencyCode,
-                trailing = currency.symbol
-            )
-        },
-        balance = formAccount.balance.toString(),
-        color = formAccount.color
-    ))
+    private val accountId: Long = savedStateHandle["id"] ?: 0L
+
+    private val _state = MutableStateFlow(AccountFormState())
     val state: StateFlow<AccountFormState> = _state.asStateFlow()
+
+    private lateinit var formAccount: Account
+
+    init {
+        viewModelScope.launch {
+            if (accountId == 0L) {
+                formAccount = Account()
+                _state.value = AccountFormState()
+            } else {
+                accountRepository.getById(accountId).collect { account ->
+                    formAccount = account
+                    _state.value = AccountFormState(
+                        title = account.title,
+                        currencyChoice =  account.currency.takeIf { it.isNotEmpty() }?.let {
+                            val currency = Currency.getInstance(it)
+                            Choice(
+                                title = currency.displayName,
+                                value = currency.currencyCode,
+                                trailing = currency.symbol
+                            )
+                        } ?: Choice(title = "", value = ""),
+                        balance = account.balance.toString(),
+                        color = account.color,
+                        isDeleteVisible = true
+                    )
+                }
+            }
+        }
+    }
 
     val currencyChoices: List<Choice>
         get() = Currency.getAvailableCurrencies()
@@ -98,9 +113,9 @@ class AccountFormViewModel(
 
         viewModelScope.launch {
             if (updatedAccount.id == 0L) {
-                app.container.accountRepository.insert(updatedAccount)
+                accountRepository.insert(updatedAccount)
             } else {
-                app.container.accountRepository.update(updatedAccount)
+                accountRepository.update(updatedAccount)
             }
             _state.update { it.copy(isSubmitSuccessful = true) }
         }
@@ -120,7 +135,7 @@ class AccountFormViewModel(
 
     fun deleteAccount() {
         viewModelScope.launch {
-            app.container.accountRepository.delete(formAccount)
+            accountRepository.delete(formAccount)
             _state.update { it.copy(isSubmitSuccessful = true) }
         }
     }
