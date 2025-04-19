@@ -12,6 +12,7 @@ interface IPeriodicTransactionRepository {
     suspend fun insert(periodicTransaction: PeriodicTransaction)
     suspend fun update(periodicTransaction: PeriodicTransaction)
     suspend fun delete(periodicTransaction: PeriodicTransaction)
+    fun getById(id: Long): Flow<PeriodicTransaction>
     fun getUnprocessed(): Flow<List<PeriodicTransaction>>
     suspend fun process(periodicTransaction: PeriodicTransaction)
     suspend fun processAllUnprocessed()
@@ -36,6 +37,10 @@ class PeriodicTransactionRepository(
 
     override suspend fun delete(periodicTransaction: PeriodicTransaction) {
         periodicTransactionDao.delete(periodicTransaction)
+    }
+
+    override fun getById(id: Long): Flow<PeriodicTransaction> {
+        return periodicTransactionDao.getById(id)
     }
 
     override fun getUnprocessed(): Flow<List<PeriodicTransaction>> {

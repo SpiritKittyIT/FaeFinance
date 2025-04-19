@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Button
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +37,7 @@ import spirit.realm.faefinance.ui.viewmodels.AppNavigationViewModel
 @Composable
 fun DrawerContent(
     navigateToAccountForm: (Long) -> Unit,
+    navigateToCategories: () -> Unit,
     navigationViewModel: AppNavigationViewModel
 ) {
     val state by navigationViewModel.state.collectAsState()
@@ -109,11 +109,13 @@ fun DrawerContent(
                 }
                 Text(
                     stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineLarge
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.primaryContainer
                 )
                 Text(
                     stringResource(R.string.by_creator),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primaryContainer
                 )
             }
             Column (
@@ -161,6 +163,7 @@ fun DrawerContent(
                     }
                     Button(
                         onClick = {
+                            navigateToCategories()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

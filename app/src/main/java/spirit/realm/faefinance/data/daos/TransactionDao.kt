@@ -36,6 +36,11 @@ interface TransactionDao {
     """)
     fun getAllWithCategory(categoryId: Long, after: Date, before: Date): Flow<List<DataTransaction>>
 
+    // Retrieves an Expanded Transaction by its id
+    @Transaction
+    @Query("SELECT * FROM `Transaction` WHERE id = :id")
+    fun getExpandedById(id: Long): Flow<TransactionExpanded>
+
     // Retrieves all Expanded Transactions for an account, filtered by the sender or recipient account
     // Results are sorted by timestamp in descending order
     @Transaction

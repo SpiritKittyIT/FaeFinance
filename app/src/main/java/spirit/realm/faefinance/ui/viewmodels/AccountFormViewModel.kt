@@ -6,16 +6,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import spirit.realm.faefinance.R
 import spirit.realm.faefinance.data.classes.Account
 import spirit.realm.faefinance.data.repositories.AccountRepository
+import spirit.realm.faefinance.ui.utility.CurrencyUtil
 import spirit.realm.faefinance.ui.components.Choice
+import spirit.realm.faefinance.ui.utility.IAppResourceProvider
 import java.util.*
 
 data class AccountFormState(
     val title: String = "",
     val currencyChoice: Choice = Choice(title = "", value = ""),
-    val balance: String = "",
+    val balance: String = "0",
     val color: Color = Color.Unspecified,
+
     val errorMessage: String? = null,
     val isSubmitSuccessful: Boolean = false,
     val showErrorDialog: Boolean = false,
@@ -25,6 +29,7 @@ data class AccountFormState(
 
 class AccountFormViewModel(
     savedStateHandle: SavedStateHandle,
+    private val resourceProvider: IAppResourceProvider,
     private val accountRepository: AccountRepository,
 ) : ViewModel() {
 
@@ -32,6 +37,8 @@ class AccountFormViewModel(
 
     private val _state = MutableStateFlow(AccountFormState())
     val state: StateFlow<AccountFormState> = _state.asStateFlow()
+
+    val currencyChoices = CurrencyUtil.currencyChoices
 
     private lateinit var formAccount: Account
 
@@ -62,40 +69,19 @@ class AccountFormViewModel(
         }
     }
 
-    val currencyChoices: List<Choice>
-        get() = Currency.getAvailableCurrencies()
-            .filter { it.displayName.contains(_state.value.currencyChoice.title) }
-            .sortedBy { it.displayName }
-            .map { currency ->
-                Choice(
-                    currency.displayName,
-                    currency.currencyCode,
-                    trailing = currency.symbol
-                )
-            }
+    // --- State Updates ---
+    fun updateTitle(newTitle: String) = _state.update { it.copy(title = newTitle) }
+    fun updateCurrencyChoice(newCurrencyChoice: Choice) = _state.update { it.copy(currencyChoice = newCurrencyChoice) }
+    fun updateBalance(newBalance: String) = _state.update { it.copy(balance = newBalance) }
+    fun updateColor(newColor: Color) = _state.update { it.copy(color = newColor) }
 
-    fun updateTitle(newTitle: String) {
-        _state.update { it.copy(title = newTitle) }
-    }
-
-    fun updateCurrencyChoice(newCurrencyChoice: Choice) {
-        _state.update { it.copy(currencyChoice = newCurrencyChoice) }
-    }
-
-    fun updateBalance(newBalance: String) {
-        _state.update { it.copy(balance = newBalance) }
-    }
-
-    fun updateColor(newColor: Color) {
-        _state.update { it.copy(color = newColor) }
-    }
-
+    // --- Submit ---
     fun validateAndSubmit() {
         val s = _state.value
         val error = when {
-            s.currencyChoice.value == "" -> "Please enter a valid currency"
-            s.balance.toDoubleOrNull() == null -> "Please enter a valid number for balance"
-            s.color == Color.Unspecified -> "Please select a valid color"
+            s.currencyChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_currency_message)
+            s.balance.toDoubleOrNull() == null -> resourceProvider.getString(R.string.invalid_balance_message)
+            s.color == Color.Unspecified -> resourceProvider.getString(R.string.invalid_color_message)
             else -> null
         }
 
@@ -121,17 +107,10 @@ class AccountFormViewModel(
         }
     }
 
-    fun dismissErrorDialog() {
-        _state.update { it.copy(showErrorDialog = false) }
-    }
-
-    fun triggerDeleteDialog() {
-        _state.update { it.copy(showDeleteDialog = true) }
-    }
-
-    fun dismissDeleteDialog() {
-        _state.update { it.copy(showDeleteDialog = false) }
-    }
+    // --- Dialog Control ---
+    fun dismissErrorDialog() = _state.update { it.copy(showErrorDialog = false) }
+    fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
+    fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
     fun deleteAccount() {
         viewModelScope.launch {

@@ -9,8 +9,8 @@ interface ICategoryRepository {
     suspend fun insertAll(categories: List<Category>)
     suspend fun update(category: Category)
     suspend fun delete(category: Category)
-    fun getCategoryById(id: Long): Flow<Category>
-    fun getAllCategories(): Flow<List<Category>>
+    fun getById(id: Long): Flow<Category>
+    fun getAll(): Flow<List<Category>>
 }
 
 class CategoryRepository(
@@ -33,11 +33,11 @@ class CategoryRepository(
         categoryDao.delete(category)
     }
 
-    override fun getCategoryById(id: Long): Flow<Category> {
+    override fun getById(id: Long): Flow<Category> {
         return categoryDao.getById(id)
     }
 
-    override fun getAllCategories(): Flow<List<Category>> {
+    override fun getAll(): Flow<List<Category>> {
         return categoryDao.getAll()
     }
 }

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import spirit.realm.faefinance.DatabaseApplication
+import spirit.realm.faefinance.ui.utility.AppResourceProvider
 
 object AppViewModelProvider {
 
@@ -21,9 +22,39 @@ object AppViewModelProvider {
 
         initializer {
             val app = this.databaseApplication()
+            BudgetsViewModel(
+                budgetRepository = app.container.budgetRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            CategoriesViewModel(
+                categoryRepository = app.container.categoryRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            PeriodicTransactionsViewModel(
+                periodicTransactionRepository = app.container.periodicTransactionRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            TransactionsViewModel(
+                settings = app.container.settings,
+                transactionRepository = app.container.transactionRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
             val savedStateHandle = this.createSavedStateHandle()
             AccountFormViewModel(
                 savedStateHandle = savedStateHandle,
+                resourceProvider = AppResourceProvider(app.applicationContext),
                 accountRepository = app.container.accountRepository
             )
         }
@@ -31,9 +62,44 @@ object AppViewModelProvider {
         initializer {
             val app = this.databaseApplication()
             val savedStateHandle = this.createSavedStateHandle()
-            TransactionsViewModel(
-                settings = app.container.settings,
-                transactionRepository = app.container.transactionRepository
+            BudgetFormViewModel(
+                savedStateHandle = savedStateHandle,
+                resourceProvider = AppResourceProvider(app.applicationContext),
+                budgetRepository = app.container.budgetRepository,
+                categoryRepository = app.container.categoryRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            val savedStateHandle = this.createSavedStateHandle()
+            CategoryFormViewModel(
+                savedStateHandle = savedStateHandle,
+                categoryRepository = app.container.categoryRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            val savedStateHandle = this.createSavedStateHandle()
+            PeriodicFormViewModel(
+                savedStateHandle = savedStateHandle,
+                resourceProvider = AppResourceProvider(app.applicationContext),
+                periodicTransactionRepository = app.container.periodicTransactionRepository,
+                accountRepository = app.container.accountRepository,
+                categoryRepository = app.container.categoryRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            val savedStateHandle = this.createSavedStateHandle()
+            TransactionFormViewModel(
+                savedStateHandle = savedStateHandle,
+                resourceProvider = AppResourceProvider(app.applicationContext),
+                transactionRepository = app.container.transactionRepository,
+                accountRepository = app.container.accountRepository,
+                categoryRepository = app.container.categoryRepository
             )
         }
     }

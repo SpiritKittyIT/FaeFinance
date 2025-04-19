@@ -9,6 +9,7 @@ import spirit.realm.faefinance.data.CurrencyConverter
 import spirit.realm.faefinance.data.classes.ETransactionType
 import spirit.realm.faefinance.data.classes.TransactionExpanded
 import spirit.realm.faefinance.data.classes.TransactionGroup
+import spirit.realm.faefinance.data.classes.TransactionGroupDate
 import spirit.realm.faefinance.data.daos.AccountDao
 import spirit.realm.faefinance.data.daos.BudgetDao
 import spirit.realm.faefinance.data.classes.Transaction as DataTransaction
@@ -16,11 +17,13 @@ import spirit.realm.faefinance.data.daos.TransactionDao
 import java.util.Calendar
 
 interface ITransactionRepository {
+    fun getById(id: Long): Flow<DataTransaction>
     suspend fun update(transaction: DataTransaction)
     suspend fun delete(transaction: DataTransaction)
     suspend fun process(transaction: DataTransaction)
     suspend fun deleteAllByAccount(accountId: Long)
-    fun getExpandedAllByAccountGrouped(accountId: Long): Flow<Map<TransactionGroup, List<TransactionExpanded>>>
+    fun getExpandedById(id: Long): Flow<TransactionExpanded>
+    fun getExpandedAllByAccountGrouped(accountId: Long): Flow<List<TransactionGroup>>
 }
 
 class TransactionRepository(
@@ -83,6 +86,11 @@ class TransactionRepository(
     }
 
     // public
+
+
+    override fun getById(id: Long): Flow<DataTransaction> {
+        return transactionDao.getById(id)
+    }
 
     override suspend fun update(transaction: DataTransaction) {
         db.withTransaction {
@@ -164,16 +172,23 @@ class TransactionRepository(
         }
     }
 
-    override fun getExpandedAllByAccountGrouped(accountId: Long): Flow<Map<TransactionGroup, List<TransactionExpanded>>> {
+    override fun getExpandedById(id: Long): Flow<TransactionExpanded> {
+        return transactionDao.getExpandedById(id)
+    }
+
+    override fun getExpandedAllByAccountGrouped(accountId: Long): Flow<List<TransactionGroup>> {
         return transactionDao.getExpandedAllByAccount(accountId).map { list ->
             list.groupBy {
                 val cal = Calendar.getInstance().apply { time = it.transaction.timestamp }
-                TransactionGroup(
+                TransactionGroupDate(
                     year = cal.get(Calendar.YEAR),
                     month = cal.get(Calendar.MONTH) + 1 // calendar months are 0-based
                 )
-            }.toSortedMap(compareByDescending<TransactionGroup> { it.year }
+            }.toSortedMap(compareByDescending<TransactionGroupDate> { it.year }
                 .thenByDescending { it.month })
+            .map { (date, transactions) ->
+                TransactionGroup(groupDate = date, accounts = transactions)
+            }
         }
     }
 }

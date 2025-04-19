@@ -17,6 +17,11 @@ interface PeriodicTransactionDao {
     @Delete
     suspend fun delete(periodicTransaction: PeriodicTransaction)
 
+    // Retrieves PeriodicTransaction by its id
+    @Transaction
+    @Query("SELECT * FROM PeriodicTransaction WHERE id = :id")
+    fun getById(id: Long): Flow<PeriodicTransaction>
+
     // Retrieves all unprocessed PeriodicTransactions based on date
     @Query("""
         DELETE FROM PeriodicTransaction
