@@ -42,7 +42,10 @@ fun MyTopAppBar(
     if (isMainScreen) {
         TopAppBar(
             title = {
-                Text(accountTitle ?: stringResource(R.string.default_account_title))
+                Text(
+                    accountTitle ?: stringResource(R.string.default_account_title),
+                    maxLines = 1,
+                )
             },
             navigationIcon = {
                 IconButton(onClick = {
@@ -81,7 +84,8 @@ fun MyTopAppBar(
                         CategoryFormDestination.routeWithArgs -> stringResource(R.string.form_category)
                         CategoriesDestination.route -> stringResource(R.string.screen_categories)
                         else -> ""
-                    }
+                    },
+                    maxLines = 1,
                 )
             },
             navigationIcon = {

@@ -67,107 +67,109 @@ fun DrawerContent(
     )
 
     ModalDrawerSheet {
-        Column {
-            Column (
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(16.dp)
-            ) {
-                Row (
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+        LazyColumn {
+            item {
+                Column (
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(16.dp)
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.logo),
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .size(180.dp)
-                            .clip(RoundedCornerShape(1000.dp))
-                    )
-                    Switch(
-                        checked = state.isDarkTheme,
-                        onCheckedChange = navigationViewModel::setDarkTheme,
-                        thumbContent = if (state.isDarkTheme) {
-                            {
-                                Icon(
-                                    imageVector = Icons.Default.DarkMode,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
-                            }
-                        } else {
-                            {
-                                Icon(
-                                    imageVector = Icons.Default.LightMode,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
-                            }
-                        }
-                    )
-                }
-                Text(
-                    stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                )
-                Text(
-                    stringResource(R.string.by_creator),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                )
-            }
-            Column (
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                AccountSelector(
-                    account = allAccount,
-                    activeAccountId = state.activeAccountId,
-                    onAccountSelected = navigationViewModel::updateActiveAccount,
-                    navigateToAccountForm = navigateToAccountForm,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                LazyColumn (
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    itemsIndexed(localAccounts, key = { _, item -> item.id }) { index, account ->
-                        DraggableAccountSelector(
-                            index = index,
-                            account = account,
-                            activeAccountId = state.activeAccountId,
-                            onAccountSelected = navigationViewModel::updateActiveAccount,
-                            navigateToAccountForm = navigateToAccountForm,
-                            onMove = onMove,
-                            onDragEnd = onDragEnd,
+                    Row (
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.logo),
+                            contentDescription = "Logo",
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .size(180.dp)
+                                .clip(RoundedCornerShape(1000.dp))
+                        )
+                        Switch(
+                            checked = state.isDarkTheme,
+                            onCheckedChange = navigationViewModel::setDarkTheme,
+                            thumbContent = if (state.isDarkTheme) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.DarkMode,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                }
+                            } else {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.LightMode,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                }
+                            }
                         )
                     }
+                    Text(
+                        stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        stringResource(R.string.by_creator),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
-                HorizontalDivider()
                 Column (
-                    modifier = Modifier.fillMaxWidth(0.7f)
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
                 ) {
-                    Button(
-                        onClick = {
-                            navigateToAccountForm(0L)
-                        },
+                    AccountSelector(
+                        account = allAccount,
+                        activeAccountId = state.activeAccountId,
+                        onAccountSelected = navigationViewModel::updateActiveAccount,
+                        navigateToAccountForm = navigateToAccountForm,
                         modifier = Modifier.fillMaxWidth()
+                    )
+                    LazyColumn (
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Text(stringResource(R.string.add_account))
+                        itemsIndexed(localAccounts, key = { _, item -> item.id }) { index, account ->
+                            DraggableAccountSelector(
+                                index = index,
+                                account = account,
+                                activeAccountId = state.activeAccountId,
+                                onAccountSelected = navigationViewModel::updateActiveAccount,
+                                navigateToAccountForm = navigateToAccountForm,
+                                onMove = onMove,
+                                onDragEnd = onDragEnd,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            )
+                        }
                     }
-                    Button(
-                        onClick = {
-                            navigateToCategories()
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                    HorizontalDivider()
+                    Column (
+                        modifier = Modifier.fillMaxWidth(0.7f)
                     ) {
-                        Text(stringResource(R.string.manage_categories))
+                        Button(
+                            onClick = {
+                                navigateToAccountForm(0L)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.add_account))
+                        }
+                        Button(
+                            onClick = {
+                                navigateToCategories()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.manage_categories))
+                        }
                     }
                 }
             }

@@ -16,7 +16,6 @@ data class CategoryFormState(
     var title: String = "",
     var symbol: String = "",
     val errorMessage: String? = null,
-    val isSubmitSuccessful: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val isDeleteVisible: Boolean = false
 )
@@ -26,15 +25,15 @@ class CategoryFormViewModel(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    private val _categoryId: Long = savedStateHandle["id"] ?: 0L
+    private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
     private val _state = MutableStateFlow(CategoryFormState())
     val state: StateFlow<CategoryFormState> = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
-            if (_categoryId != 0L) {
-                categoryRepository.getById(_categoryId).collect { category ->
+            if (_itemId != 0L) {
+                categoryRepository.getById(_itemId).first().let { category ->
                     _state.value = CategoryFormState(
                         title = category.title,
                         symbol = category.symbol,
@@ -50,22 +49,22 @@ class CategoryFormViewModel(
     fun updateSymbol(newSymbol: String) = _state.update { state -> state.copy(symbol = newSymbol) }
 
     // --- Submit ---
-    fun validateAndSubmit() {
+    fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
 
         val updatedCategory = Category(
-            id = _categoryId,
+            id = _itemId,
             title = s.title,
             symbol = s.symbol
         )
 
+        navigateBack()
         viewModelScope.launch {
-            if (_categoryId == 0L) {
+            if (_itemId == 0L) {
                 categoryRepository.insert(updatedCategory)
             } else {
                 categoryRepository.update(updatedCategory)
             }
-            _state.update { it.copy(isSubmitSuccessful = true) }
         }
     }
 
@@ -73,11 +72,12 @@ class CategoryFormViewModel(
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
-    fun deleteCategory() {
+    fun deleteItem(navigateBack: () -> Unit) {
+        navigateBack()
         viewModelScope.launch {
-            categoryRepository.getById(_categoryId).first().let {
-                categoryRepository.delete(it)
-                _state.update { it.copy(isSubmitSuccessful = true) }
+            if (_itemId != 0L)
+            {
+                categoryRepository.deleteById(_itemId)
             }
         }
     }

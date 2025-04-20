@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -40,67 +41,63 @@ fun CategoryFormScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(state.isSubmitSuccessful) {
-        if (state.isSubmitSuccessful) {
-            navigateBack()
-        }
-    }
-
     LaunchedEffect(Unit) {
         setFormSubmit {
-            viewModel.validateAndSubmit()
+            viewModel.validateAndSubmit(navigateBack)
         }
     }
 
-    Column (
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-    ) {
-        OutlinedTextField(
-            value = state.title,
-            onValueChange = viewModel::updateTitle,
-            label = { Text(stringResource(R.string.title)) },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text
-            ),
-            modifier = Modifier
-                .fillMaxWidth(),
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = state.symbol,
-            onValueChange = viewModel::updateSymbol,
-            label = { Text(stringResource(R.string.symbol)) },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text
-            ),
-            modifier = Modifier
-                .fillMaxWidth(),
-            singleLine = true,
-        )
-        if (state.isDeleteVisible) {
-            Button(
-                onClick = viewModel::triggerDeleteDialog,
-                modifier = Modifier.fillMaxWidth()
+    LazyColumn {
+        item {
+            Column (
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
             ) {
-                Text(stringResource(R.string.delete))
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = viewModel::updateTitle,
+                    label = { Text(stringResource(R.string.title)) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = state.symbol,
+                    onValueChange = viewModel::updateSymbol,
+                    label = { Text(stringResource(R.string.symbol)) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    singleLine = true,
+                )
+                if (state.isDeleteVisible) {
+                    Button(
+                        onClick = viewModel::triggerDeleteDialog,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.delete))
+                    }
+                }
             }
         }
     }
 
-    // Delete confirmation dialog
+    // Delete Confirmation Dialog
     if (state.showDeleteDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissDeleteDialog,
             title = { Text(stringResource(R.string.confirm_deletion)) },
             text = { Text(stringResource(R.string.are_you_sure_delete)) },
             confirmButton = {
-                TextButton(
-                    onClick = viewModel::deleteCategory
-                ) {
+                TextButton(onClick = { viewModel.deleteItem(navigateBack) }) {
                     Text(stringResource(R.string.confirm))
                 }
             },

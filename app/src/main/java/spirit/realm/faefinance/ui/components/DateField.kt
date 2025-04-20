@@ -37,7 +37,7 @@ fun DatePickerModal(
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = if (selectedDate == null) null
-            else selectedDate.time
+        else selectedDate.time
                 + TimeZone.getTimeZone(ZoneId.systemDefault()).dstSavings
                 + TimeZone.getTimeZone(ZoneId.systemDefault()).rawOffset
     )
@@ -71,13 +71,8 @@ fun DateField(
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val formatter = DateFormatterUtil.formatter
 
-    val parsedDate = try {
-        formatter.parse(dateText)
-    } catch (_: Exception) {
-        null
-    }
+    val parsedDate = DateFormatterUtil.tryParse(dateText)
 
     val isError = dateText.isBlank() || parsedDate == null || !isValidDate(dateText)
 
@@ -107,7 +102,7 @@ fun DateField(
             onDateSelected = {
                 it?.let { millis ->
                     val selected = Date(millis)
-                    onDateTextChange(formatter.format(selected))
+                    onDateTextChange(DateFormatterUtil.format(selected))
                 }
             },
             onDismiss = { showDatePicker = false }
@@ -117,20 +112,15 @@ fun DateField(
 
 @Composable
 fun isValidDate(dateStr: String): Boolean {
-    val formatter = DateFormatterUtil.formatter
-    try {
-        val date = formatter.parse(dateStr)
+    val date = DateFormatterUtil.tryParse(dateStr)
 
-        if (date == null) return false
+    if (date == null) return false
 
-        val reformatted = formatter.format(date)
-        if (!reformatted.equals(dateStr, ignoreCase = true)) return false
+    val reformatted = DateFormatterUtil.format(date)
+    if (!reformatted.equals(dateStr, ignoreCase = true)) return false
 
-        if (!date.after(Date(0))) return false
+    if (!date.after(Date(0))) return false
 
-        val calendar = Calendar.getInstance().apply { time = date }
-        return calendar.get(Calendar.YEAR) < 2100
-    } catch (_: Exception) {
-        return false
-    }
+    val calendar = Calendar.getInstance().apply { time = date }
+    return calendar.get(Calendar.YEAR) < 2100
 }

@@ -19,7 +19,7 @@ import spirit.realm.faefinance.data.AppDatabase
 interface IBudgetRepository {
     suspend fun create(budget: Budget)
     suspend fun update(budget: Budget)
-    suspend fun delete(budget: Budget)
+    suspend fun deleteById(id: Long)
     fun getById(id: Long): Flow<Budget>
     fun getAll(): Flow<List<Budget>>
     fun getAllInSet(setId: Long): Flow<List<Budget>>
@@ -123,8 +123,8 @@ class BudgetRepository(
         }
     }
 
-    override suspend fun delete(budget: Budget) {
-        budgetDao.delete(budget)
+    override suspend fun deleteById(id: Long) {
+        budgetDao.deleteById(id)
     }
 
     override fun getById(id: Long): Flow<Budget> {

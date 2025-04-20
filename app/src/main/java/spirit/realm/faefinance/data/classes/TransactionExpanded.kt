@@ -16,7 +16,7 @@ data class TransactionExpanded(
         parentColumn = "recipientAccount",
         entityColumn = "id"
     )
-    val recipientAccount: Account,
+    val recipientAccount: Account?,
 
     @Relation(
         parentColumn = "category",

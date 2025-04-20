@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -43,98 +44,96 @@ fun TransactionFormScreen(
     val accountChoices by viewModel.accountChoices.collectAsState()
     val categoryChoices by viewModel.categoryChoices.collectAsState()
 
-    LaunchedEffect(state.isSubmitSuccessful) {
-        if (state.isSubmitSuccessful) {
-            navigateBack()
-        }
-    }
-
     LaunchedEffect(Unit) {
         setFormSubmit {
-            viewModel.validateAndSubmit()
+            viewModel.validateAndSubmit(navigateBack)
         }
     }
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        AutocompleteDropdown(
-            label = stringResource(R.string.transaction_type),
-            choices = viewModel.transactionTypeChoices,
-            selected = state.typeChoice,
-            onSelect = viewModel::updateTransactionTypeChoice,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = state.title,
-            onValueChange = viewModel::updateTitle,
-            label = { Text(stringResource(R.string.title)) },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            singleLine = true,
-        )
-
-        OutlinedTextField(
-            value = state.amount,
-            onValueChange = viewModel::updateAmount,
-            label = { Text(stringResource(R.string.amount)) },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-        )
-
-        AutocompleteDropdown(
-            label = stringResource(R.string.sender_account),
-            choices = accountChoices,
-            selected = state.senderAccountChoice,
-            onSelect = viewModel::updateSenderAccountChoice,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        if (state.typeChoice.value == ETransactionType.Transfer.toString()) {
-            AutocompleteDropdown(
-                label = stringResource(R.string.recipient_account),
-                choices = accountChoices,
-                selected = state.recipientAccountChoice,
-                onSelect = viewModel::updateRecipientAccountChoice,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        AutocompleteDropdown(
-            label = stringResource(R.string.currency),
-            choices = viewModel.currencyChoices,
-            selected = state.currencyChoice,
-            onSelect = viewModel::updateCurrencyChoice,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        AutocompleteDropdown(
-            label = stringResource(R.string.category),
-            choices = categoryChoices,
-            selected = state.categoryChoice,
-            onSelect = viewModel::updateCategoryChoice,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        DateField(
-            label = stringResource(R.string.timestamp),
-            dateText = state.timestamp,
-            onDateTextChange = viewModel::updateTimestamp,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        if (state.isDeleteVisible) {
-            Button(
-                onClick = viewModel::triggerDeleteDialog,
-                modifier = Modifier.fillMaxWidth()
+    LazyColumn  {
+        item {
+            Column (
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-                Text(stringResource(R.string.delete))
+                AutocompleteDropdown(
+                    label = stringResource(R.string.transaction_type),
+                    choices = viewModel.transactionTypeChoices,
+                    selected = state.typeChoice,
+                    onSelect = viewModel::updateTransactionTypeChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = viewModel::updateTitle,
+                    label = { Text(stringResource(R.string.title)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    singleLine = true,
+                )
+
+                OutlinedTextField(
+                    value = state.amount,
+                    onValueChange = viewModel::updateAmount,
+                    label = { Text(stringResource(R.string.amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                )
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.sender_account),
+                    choices = accountChoices,
+                    selected = state.senderAccountChoice,
+                    onSelect = viewModel::updateSenderAccountChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (state.typeChoice.value == ETransactionType.Transfer.toString()) {
+                    AutocompleteDropdown(
+                        label = stringResource(R.string.recipient_account),
+                        choices = accountChoices,
+                        selected = state.recipientAccountChoice,
+                        onSelect = viewModel::updateRecipientAccountChoice,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.currency),
+                    choices = viewModel.currencyChoices,
+                    selected = state.currencyChoice,
+                    onSelect = viewModel::updateCurrencyChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.category),
+                    choices = categoryChoices,
+                    selected = state.categoryChoice,
+                    onSelect = viewModel::updateCategoryChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                DateField(
+                    label = stringResource(R.string.timestamp),
+                    dateText = state.timestamp,
+                    onDateTextChange = viewModel::updateTimestamp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (state.isDeleteVisible) {
+                    Button(
+                        onClick = viewModel::triggerDeleteDialog,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.delete))
+                    }
+                }
             }
         }
     }
@@ -160,7 +159,7 @@ fun TransactionFormScreen(
             title = { Text(stringResource(R.string.confirm_deletion)) },
             text = { Text(stringResource(R.string.are_you_sure_delete)) },
             confirmButton = {
-                TextButton(onClick = viewModel::deleteTransaction) {
+                TextButton(onClick = { viewModel.deleteItem(navigateBack) }) {
                     Text(stringResource(R.string.confirm))
                 }
             },

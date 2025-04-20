@@ -14,8 +14,8 @@ interface BudgetDao {
     @Update
     suspend fun update(budget: Budget)
 
-    @Delete
-    suspend fun delete(budget: Budget)
+    @Query("DELETE FROM Budget WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     // Retrieve a specific Budget by its ID
     @Query("SELECT * FROM Budget WHERE id = :id")

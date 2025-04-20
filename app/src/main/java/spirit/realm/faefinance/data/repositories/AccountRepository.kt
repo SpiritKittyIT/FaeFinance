@@ -12,7 +12,7 @@ import spirit.realm.faefinance.data.daos.PeriodicTransactionDao
 interface IAccountRepository {
     suspend fun insert(account: Account)
     suspend fun update(account: Account)
-    suspend fun delete(account: Account)
+    suspend fun deleteById(id: Long)
     fun getAll(): Flow<List<Account>>
     fun getById(id: Long): Flow<Account>
 }
@@ -44,11 +44,11 @@ class AccountRepository(
         accountDao.update(account)
     }
 
-    override suspend fun delete(account: Account) {
+    override suspend fun deleteById(id: Long) {
         db.withTransaction {
-            transactionRepo.deleteAllByAccount(account.id)
-            periodicTransactionDao.deleteAllWithAccount(account.id)
-            accountDao.delete(account)
+            transactionRepo.deleteAllByAccount(id)
+            periodicTransactionDao.deleteAllWithAccount(id)
+            accountDao.deleteById(id)
         }
     }
 

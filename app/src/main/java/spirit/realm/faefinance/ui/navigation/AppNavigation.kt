@@ -152,7 +152,11 @@ fun AppNavigation(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                composable(TransactionsDestination.route) { TransactionsScreen() }
+                composable(TransactionsDestination.route) { TransactionsScreen(
+                    navigateToTransactionForm = {
+                        navController.navigate("${TransactionFormDestination.route}/$it")
+                    }
+                ) }
                 composable(BudgetsDestination.route) { BudgetsScreen() }
                 composable(PeriodicDestination.route) { PeriodicScreen() }
                 composable(ChartsDestination.route) { ChartsScreen() }

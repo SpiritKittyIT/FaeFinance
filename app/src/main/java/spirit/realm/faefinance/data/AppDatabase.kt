@@ -1,6 +1,5 @@
 package spirit.realm.faefinance.data
 
-import Converters
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
@@ -28,7 +27,7 @@ import spirit.realm.faefinance.data.daos.TransactionDao
         Transaction::class,
         PeriodicTransaction::class
     ],
-    version = 1
+    version = 2
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -46,12 +45,13 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(
-                    context,
-                    AppDatabase::class.java,
-                    "app_database"
-                )
-                .build()
-                .also { Instance = it }
+                        context,
+                        AppDatabase::class.java,
+                        "app_database"
+                    )
+                    .fallbackToDestructiveMigration(false)
+                    .build()
+                    .also { Instance = it }
             }
         }
     }

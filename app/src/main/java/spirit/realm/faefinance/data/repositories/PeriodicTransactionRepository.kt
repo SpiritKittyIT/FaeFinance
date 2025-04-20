@@ -11,7 +11,7 @@ import java.util.*
 interface IPeriodicTransactionRepository {
     suspend fun insert(periodicTransaction: PeriodicTransaction)
     suspend fun update(periodicTransaction: PeriodicTransaction)
-    suspend fun delete(periodicTransaction: PeriodicTransaction)
+    suspend fun deleteById(id: Long)
     fun getById(id: Long): Flow<PeriodicTransaction>
     fun getUnprocessed(): Flow<List<PeriodicTransaction>>
     suspend fun process(periodicTransaction: PeriodicTransaction)
@@ -35,8 +35,8 @@ class PeriodicTransactionRepository(
         periodicTransactionDao.update(periodicTransaction)
     }
 
-    override suspend fun delete(periodicTransaction: PeriodicTransaction) {
-        periodicTransactionDao.delete(periodicTransaction)
+    override suspend fun deleteById(id: Long) {
+        periodicTransactionDao.deleteById(id)
     }
 
     override fun getById(id: Long): Flow<PeriodicTransaction> {
@@ -67,7 +67,7 @@ class PeriodicTransactionRepository(
             // Process the periodic transaction based on its intervalLength.
             if (periodicTransaction.intervalLength == 0) {
                 // No further recurrence; delete this periodic transaction.
-                periodicTransactionDao.delete(periodicTransaction)
+                periodicTransactionDao.deleteById(periodicTransaction.id)
             }
             else {
                 // Calculate new nextTransaction date.

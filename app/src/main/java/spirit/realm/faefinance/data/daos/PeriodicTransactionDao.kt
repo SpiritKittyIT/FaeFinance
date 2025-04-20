@@ -14,8 +14,8 @@ interface PeriodicTransactionDao {
     @Update
     suspend fun update(periodicTransaction: PeriodicTransaction)
 
-    @Delete
-    suspend fun delete(periodicTransaction: PeriodicTransaction)
+    @Query("DELETE FROM PeriodicTransaction WHERE id = :id")
+    suspend fun deleteById(id: Long)
 
     // Retrieves PeriodicTransaction by its id
     @Transaction

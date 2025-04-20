@@ -1,6 +1,6 @@
 package spirit.realm.faefinance.ui.components
 
-import Converters
+import spirit.realm.faefinance.data.Converters
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

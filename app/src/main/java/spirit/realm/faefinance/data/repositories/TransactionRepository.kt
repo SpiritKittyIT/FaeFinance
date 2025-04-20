@@ -20,6 +20,7 @@ interface ITransactionRepository {
     fun getById(id: Long): Flow<DataTransaction>
     suspend fun update(transaction: DataTransaction)
     suspend fun delete(transaction: DataTransaction)
+    suspend fun deleteById(id: Long)
     suspend fun process(transaction: DataTransaction)
     suspend fun deleteAllByAccount(accountId: Long)
     fun getExpandedById(id: Long): Flow<TransactionExpanded>
@@ -126,13 +127,25 @@ class TransactionRepository(
         }
     }
 
+    override suspend fun deleteById(id: Long) {
+        db.withTransaction {
+            val transaction = transactionDao.getById(id).first()
+
+            // Revert transaction effects
+            apply(transaction, true)
+
+            // Delete the transaction record
+            transactionDao.deleteById(id)
+        }
+    }
+
     override suspend fun delete(transaction: DataTransaction) {
         db.withTransaction {
             // Revert transaction effects
             apply(transaction, true)
 
             // Delete the transaction record
-            transactionDao.delete(transaction)
+            transactionDao.deleteById(transaction.id)
         }
     }
 
@@ -143,21 +156,23 @@ class TransactionRepository(
                 createTransaction(transaction)
             }
             else {
-                // Create income transaction for the recipient account.
-                val incomeTransaction = transaction.copy(
-                    id = 0, // Assume a new auto-generated id
-                    type = ETransactionType.Income,
-                    senderAccount = transaction.recipientAccount,
-                    recipientAccount = 0
-                )
-                createTransaction(incomeTransaction)
+                if (transaction.recipientAccount != null) {
+                    // Create income transaction for the recipient account.
+                    val incomeTransaction = transaction.copy(
+                        id = 0, // Assume a new auto-generated id
+                        type = ETransactionType.Income,
+                        senderAccount = transaction.recipientAccount!!,
+                        recipientAccount = transaction.senderAccount
+                    )
+                    createTransaction(incomeTransaction)
+                }
 
                 // Create expense transaction for the sender account.
                 val expenseTransaction = transaction.copy(
                     id = 0, // Assume a new auto-generated id
                     type = ETransactionType.Expense,
                     senderAccount = transaction.senderAccount,
-                    recipientAccount = 0
+                    recipientAccount = transaction.recipientAccount
                 )
                 createTransaction(expenseTransaction)
             }

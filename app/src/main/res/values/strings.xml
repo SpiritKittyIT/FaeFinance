@@ -57,4 +57,5 @@
     <string name="timestamp">Timestamp</string>
     <string name="invalid_timestamp_message">Please enter a valid timestamp</string>
     <string name="pick_date">Pick Date</string>
+    <string name="invalid_sort_order_message">Please enter a valid sort order</string>
 </resources>

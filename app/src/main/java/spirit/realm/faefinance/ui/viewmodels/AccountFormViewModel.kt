@@ -19,9 +19,9 @@ data class AccountFormState(
     val currencyChoice: Choice = Choice(title = "", value = ""),
     val balance: String = "0",
     val color: Color = Color.Unspecified,
+    val sortOrder: String = Long.MAX_VALUE.toString(),
 
     val errorMessage: String? = null,
-    val isSubmitSuccessful: Boolean = false,
     val showErrorDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val isDeleteVisible: Boolean = false
@@ -33,23 +33,19 @@ class AccountFormViewModel(
     private val accountRepository: AccountRepository,
 ) : ViewModel() {
 
-    private val accountId: Long = savedStateHandle["id"] ?: 0L
+    private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
     private val _state = MutableStateFlow(AccountFormState())
     val state: StateFlow<AccountFormState> = _state.asStateFlow()
 
     val currencyChoices = CurrencyUtil.currencyChoices
 
-    private lateinit var formAccount: Account
-
     init {
         viewModelScope.launch {
-            if (accountId == 0L) {
-                formAccount = Account()
+            if (_itemId == 0L) {
                 _state.value = AccountFormState()
             } else {
-                accountRepository.getById(accountId).collect { account ->
-                    formAccount = account
+                accountRepository.getById(_itemId).first().let { account ->
                     _state.value = AccountFormState(
                         title = account.title,
                         currencyChoice =  account.currency.takeIf { it.isNotEmpty() }?.let {
@@ -62,6 +58,7 @@ class AccountFormViewModel(
                         } ?: Choice(title = "", value = ""),
                         balance = account.balance.toString(),
                         color = account.color,
+                        sortOrder = account.sortOrder.toString(),
                         isDeleteVisible = true
                     )
                 }
@@ -76,12 +73,13 @@ class AccountFormViewModel(
     fun updateColor(newColor: Color) = _state.update { it.copy(color = newColor) }
 
     // --- Submit ---
-    fun validateAndSubmit() {
+    fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
         val error = when {
             s.currencyChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_currency_message)
             s.balance.toDoubleOrNull() == null -> resourceProvider.getString(R.string.invalid_balance_message)
             s.color == Color.Unspecified -> resourceProvider.getString(R.string.invalid_color_message)
+            s.sortOrder.toDoubleOrNull() == null -> resourceProvider.getString(R.string.invalid_sort_order_message)
             else -> null
         }
 
@@ -90,20 +88,22 @@ class AccountFormViewModel(
             return
         }
 
-        val updatedAccount = formAccount.copy(
+        val updatedAccount = Account(
+            id = _itemId,
             title = s.title,
             currency = s.currencyChoice.value,
             balance = s.balance.toDouble(),
-            color = s.color
+            color = s.color,
+            sortOrder = s.sortOrder.toLong()
         )
 
+        navigateBack()
         viewModelScope.launch {
             if (updatedAccount.id == 0L) {
                 accountRepository.insert(updatedAccount)
             } else {
                 accountRepository.update(updatedAccount)
             }
-            _state.update { it.copy(isSubmitSuccessful = true) }
         }
     }
 
@@ -112,10 +112,13 @@ class AccountFormViewModel(
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
-    fun deleteAccount() {
+    fun deleteItem(navigateBack: () -> Unit) {
+        navigateBack()
         viewModelScope.launch {
-            accountRepository.delete(formAccount)
-            _state.update { it.copy(isSubmitSuccessful = true) }
+            if (_itemId != 0L)
+            {
+                accountRepository.deleteById(_itemId)
+            }
         }
     }
 }

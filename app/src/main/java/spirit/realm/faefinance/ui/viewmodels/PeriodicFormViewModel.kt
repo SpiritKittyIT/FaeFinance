@@ -38,7 +38,6 @@ data class PeriodicFormState(
     var intervalLength: String = "0",
 
     val errorMessage: String? = null,
-    val isSubmitSuccessful: Boolean = false,
     val showErrorDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val isDeleteVisible: Boolean = false
@@ -52,7 +51,7 @@ class PeriodicFormViewModel(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    private val _periodicId: Long = savedStateHandle["id"] ?: 0L
+    private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
     private val _state = MutableStateFlow(PeriodicFormState())
     val state: StateFlow<PeriodicFormState> = _state.asStateFlow()
@@ -81,8 +80,8 @@ class PeriodicFormViewModel(
         }
 
         viewModelScope.launch {
-            if (_periodicId != 0L) {
-                periodicTransactionRepository.getExpandedById(_periodicId).collect { expanded ->
+            if (_itemId != 0L) {
+                periodicTransactionRepository.getExpandedById(_itemId).first().let { expanded ->
                     _state.value = PeriodicFormState(
                         typeChoice = transactionTypeChoices.first { it.value == expanded.periodicTransaction.type.toString() },
                         title = expanded.periodicTransaction.title,
@@ -114,7 +113,7 @@ class PeriodicFormViewModel(
     fun updateIntervalLength(length: String) = _state.update { it.copy(intervalLength = length) }
 
     // --- Submit ---
-    fun validateAndSubmit() {
+    fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
 
         val error = when {
@@ -136,7 +135,7 @@ class PeriodicFormViewModel(
         }
 
         val model = PeriodicTransaction(
-            id = _periodicId,
+            id = _itemId,
             type = ETransactionType.valueOf(s.typeChoice.value),
             title = s.title,
             amount = s.amount.toDouble(),
@@ -149,14 +148,13 @@ class PeriodicFormViewModel(
             intervalLength = s.intervalLength.toInt()
         )
 
+        navigateBack()
         viewModelScope.launch {
-            if (_periodicId == 0L) {
+            if (_itemId == 0L) {
                 periodicTransactionRepository.insert(model)
             } else {
                 periodicTransactionRepository.update(model)
             }
-
-            _state.update { it.copy(isSubmitSuccessful = true) }
         }
     }
 
@@ -165,11 +163,12 @@ class PeriodicFormViewModel(
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
-    fun deletePeriodicTransaction() {
+    fun deleteItem(navigateBack: () -> Unit) {
+        navigateBack()
         viewModelScope.launch {
-            periodicTransactionRepository.getById(_periodicId).first().let {
-                periodicTransactionRepository.delete(it)
-                _state.update { it.copy(isSubmitSuccessful = true) }
+            if (_itemId != 0L)
+            {
+                periodicTransactionRepository.deleteById(_itemId)
             }
         }
     }

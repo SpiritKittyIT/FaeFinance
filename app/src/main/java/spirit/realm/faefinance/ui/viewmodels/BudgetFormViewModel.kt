@@ -34,7 +34,6 @@ data class BudgetFormState(
     val intervalLength: String = "0",
     val categoryChoices: List<Choice> = emptyList(),
 
-    val isSubmitSuccessful: Boolean = false,
     val showErrorDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val isDeleteVisible: Boolean = false,
@@ -48,7 +47,7 @@ class BudgetFormViewModel(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    private val _budgetId: Long = savedStateHandle["id"] ?: 0L
+    private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
     private val _state = MutableStateFlow(BudgetFormState())
     val state: StateFlow<BudgetFormState> = _state.asStateFlow()
@@ -56,19 +55,19 @@ class BudgetFormViewModel(
     val currencyChoices = CurrencyUtil.currencyChoices
     val intervalChoices = TransactionIntervalUtil.getChoices(resourceProvider)
 
-    private val _categoryOptions = MutableStateFlow<List<Choice>>(emptyList())
-    val categoryOptions: StateFlow<List<Choice>> = _categoryOptions.asStateFlow()
+    private val _categoryChoices = MutableStateFlow<List<Choice>>(emptyList())
+    val categoryChoices: StateFlow<List<Choice>> = _categoryChoices.asStateFlow()
 
     init {
         viewModelScope.launch {
             CategoryUtil.getCategoryChoices(categoryRepository).collect {
-                _categoryOptions.value = it
+                _categoryChoices.value = it
             }
         }
 
         viewModelScope.launch {
-            if (_budgetId != 0L) {
-                budgetRepository.getExpandedById(_budgetId).collect { expanded ->
+            if (_itemId != 0L) {
+                budgetRepository.getExpandedById(_itemId).first().let { expanded ->
                     _state.value = BudgetFormState(
                         title = expanded.budget.title,
                         currencyChoice = currencyChoices.first { it.value == expanded.budget.currency },
@@ -100,7 +99,7 @@ class BudgetFormViewModel(
     fun updateCategoryChoices(choices: List<Choice>) = _state.update { it.copy(categoryChoices = choices) }
 
     // --- Submit ---
-    fun validateAndSubmit() {
+    fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
 
         val error = when {
@@ -118,7 +117,7 @@ class BudgetFormViewModel(
         }
 
         val budget = Budget(
-            id = _budgetId,
+            id = _itemId,
             title = s.title,
             currency = s.currencyChoice.value,
             amount = s.amount.toDouble(),
@@ -141,13 +140,13 @@ class BudgetFormViewModel(
             }.toMutableList()
         )
 
+        navigateBack()
         viewModelScope.launch {
-            if (_budgetId == 0L) {
+            if (_itemId == 0L) {
                 budgetRepository.createExpanded(expanded)
             } else {
                 budgetRepository.updateExpanded(expanded)
             }
-            _state.update { it.copy(isSubmitSuccessful = true) }
         }
     }
 
@@ -156,11 +155,12 @@ class BudgetFormViewModel(
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
-    fun deleteBudget() {
+    fun deleteItem(navigateBack: () -> Unit) {
+        navigateBack()
         viewModelScope.launch {
-            budgetRepository.getById(_budgetId).first().let {
-                budgetRepository.delete(it)
-                _state.update { it.copy(isSubmitSuccessful = true) }
+            if (_itemId != 0L)
+            {
+                budgetRepository.deleteById(_itemId)
             }
         }
     }

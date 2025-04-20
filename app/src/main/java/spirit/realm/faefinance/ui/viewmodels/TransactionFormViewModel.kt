@@ -33,10 +33,9 @@ data class TransactionFormState(
     val recipientAccountChoice: Choice = Choice(title = "", value = ""),
     val currencyChoice: Choice = Choice(title = "", value = ""),
     val categoryChoice: Choice = Choice(title = "", value = ""),
-    var timestamp: String = DateFormatterUtil.formatter.format(Date()),
+    var timestamp: String = DateFormatterUtil.format(Date()),
 
     val errorMessage: String? = null,
-    val isSubmitSuccessful: Boolean = false,
     val showErrorDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val isDeleteVisible: Boolean = false
@@ -49,15 +48,19 @@ class TransactionFormViewModel(
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository
 ): ViewModel() {
-    private val dateFormatter = DateFormatterUtil.formatter
-
-    private val _transactionId: Long = savedStateHandle["id"] ?: 0L
+    private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
     private val _state = MutableStateFlow(TransactionFormState())
     val state: StateFlow<TransactionFormState> = _state.asStateFlow()
 
     val currencyChoices = CurrencyUtil.currencyChoices
-    val transactionTypeChoices = TransactionTypeUtil.getChoices(resourceProvider)
+
+    val transactionTypeChoices = TransactionTypeUtil
+        .getChoices(resourceProvider)
+        .filter {
+            if (_itemId != 0L) it.value != ETransactionType.Transfer.toString()
+            else true
+        }
 
     private val _accountChoices = MutableStateFlow<List<Choice>>(emptyList())
     val accountChoices: StateFlow<List<Choice>> = _accountChoices.asStateFlow()
@@ -79,8 +82,8 @@ class TransactionFormViewModel(
         }
 
         viewModelScope.launch {
-            if (_transactionId != 0L) {
-                transactionRepository.getExpandedById(_transactionId).collect { transactionExpanded ->
+            if (_itemId != 0L) {
+                transactionRepository.getExpandedById(_itemId).first().let { transactionExpanded ->
                     _state.value = TransactionFormState(
                         typeChoice = transactionTypeChoices.first { it.value == transactionExpanded.transaction.type.toString() },
                         title = transactionExpanded.transaction.title,
@@ -95,17 +98,19 @@ class TransactionFormViewModel(
                             value = transactionExpanded.senderAccount.id.toString(),
                             trailing = Currency.getInstance(transactionExpanded.senderAccount.currency).symbol
                         ),
-                        recipientAccountChoice = Choice(
-                            title = transactionExpanded.senderAccount.title,
-                            value = transactionExpanded.senderAccount.id.toString(),
-                            trailing = Currency.getInstance(transactionExpanded.senderAccount.currency).symbol
-                        ),
+                        recipientAccountChoice = if (transactionExpanded.recipientAccount == null)
+                            Choice(title = "", value = "")
+                            else Choice(
+                                title = transactionExpanded.recipientAccount.title,
+                                value = transactionExpanded.recipientAccount.id.toString(),
+                                trailing = Currency.getInstance(transactionExpanded.recipientAccount.currency).symbol
+                            ),
                         categoryChoice = Choice(
                             title = transactionExpanded.category.title,
                             value = transactionExpanded.category.id.toString(),
                             trailing = transactionExpanded.category.symbol,
                         ),
-                        timestamp = dateFormatter.format(transactionExpanded.transaction.timestamp),
+                        timestamp = DateFormatterUtil.format(transactionExpanded.transaction.timestamp),
                         isDeleteVisible = true
                     )
                 }
@@ -146,7 +151,7 @@ class TransactionFormViewModel(
     fun updateTimestamp(newTimestamp: String) = _state.update { state -> state.copy(timestamp = newTimestamp) }
 
     // --- Submit ---
-    fun validateAndSubmit() {
+    fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
         val error = when {
             s.typeChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_transaction_type_message)
@@ -156,7 +161,7 @@ class TransactionFormViewModel(
                     && s.recipientAccountChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_recipient_account_message)
             s.currencyChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_currency_message)
             s.categoryChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_category_message)
-            dateFormatter.parse(s.timestamp) == null -> resourceProvider.getString(R.string.invalid_timestamp_message)
+            DateFormatterUtil.tryParse(s.timestamp) == null -> resourceProvider.getString(R.string.invalid_timestamp_message)
             else -> null
         }
 
@@ -166,25 +171,25 @@ class TransactionFormViewModel(
         }
 
         val updatedTransaction = Transaction(
-            id = _transactionId,
+            id = _itemId,
             type = ETransactionType.valueOf(s.typeChoice.value),
             title = s.title,
             amount = s.amount.toDoubleOrNull() ?: 0.0,
             amountConverted = 0.0,
             senderAccount = s.senderAccountChoice.value.toLongOrNull() ?: 0L,
-            recipientAccount = s.recipientAccountChoice.value.toLongOrNull() ?: 0L,
+            recipientAccount = s.recipientAccountChoice.value.toLongOrNull(),
             currency = s.currencyChoice.value,
             category = s.categoryChoice.value.toLongOrNull() ?: 0L,
-            timestamp = dateFormatter.parse(s.timestamp) ?: Date()
+            timestamp = DateFormatterUtil.tryParse(s.timestamp) ?: Date()
         )
 
+        navigateBack()
         viewModelScope.launch {
-            if (_transactionId == 0L) {
+            if (_itemId == 0L) {
                 transactionRepository.process(updatedTransaction)
             } else {
                 transactionRepository.update(updatedTransaction)
             }
-            _state.update { it.copy(isSubmitSuccessful = true) }
         }
     }
 
@@ -193,11 +198,12 @@ class TransactionFormViewModel(
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
-    fun deleteTransaction() {
+    fun deleteItem(navigateBack: () -> Unit) {
+        navigateBack()
         viewModelScope.launch {
-            transactionRepository.getById(_transactionId).first().let {
-                transactionRepository.delete(it)
-                _state.update { it.copy(isSubmitSuccessful = true) }
+            if (_itemId != 0L)
+            {
+                transactionRepository.deleteById(_itemId)
             }
         }
     }
