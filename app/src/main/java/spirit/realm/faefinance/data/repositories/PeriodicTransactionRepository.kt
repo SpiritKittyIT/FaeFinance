@@ -85,9 +85,12 @@ class PeriodicTransactionRepository(
     }
 
     override suspend fun processAllUnprocessed() {
-        val periodicTransactions = getUnprocessed().first()
-        for (periodicTransaction in periodicTransactions) {
-            process(periodicTransaction)
+        var unprocessed = getUnprocessed().first()
+        while (unprocessed.isNotEmpty()) {
+            for (periodicTransaction in unprocessed) {
+                process(periodicTransaction)
+            }
+            unprocessed = getUnprocessed().first()
         }
     }
 

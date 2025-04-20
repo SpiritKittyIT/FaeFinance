@@ -15,7 +15,8 @@ object AppViewModelProvider {
         initializer {
             val app = this.databaseApplication()
             AppNavigationViewModel(
-                app = app,
+                accountRepository = app.container.accountRepository,
+                periodicTransactionRepository = app.container.periodicTransactionRepository,
                 settings = app.container.settings
             )
         }
@@ -46,6 +47,15 @@ object AppViewModelProvider {
             TransactionsViewModel(
                 settings = app.container.settings,
                 transactionRepository = app.container.transactionRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            val savedStateHandle = this.createSavedStateHandle()
+            BudgetDetailViewModel(
+                savedStateHandle = savedStateHandle,
+                budgetRepository = app.container.budgetRepository,
             )
         }
 

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Fae Finance</string>
     <string name="nav_transactions">Transactions</string>
     <string name="nav_budgets">Budgets</string>
@@ -12,7 +12,7 @@
     <string name="default_account_title">All Accounts</string>
     <string name="edit">Edit</string>
     <string name="select">Select</string>
-    <string name="by_creator">by lalik1@stud.uniza.sk</string>
+    <string name="by_creator" tools:ignore="Typos">by lalik1@stud.uniza.sk</string>
     <string name="add_account">Add an Account</string>
     <string name="manage_categories">Manage Categories</string>
     <string name="confirm">Confirm</string>
@@ -58,4 +58,9 @@
     <string name="invalid_timestamp_message">Please enter a valid timestamp</string>
     <string name="pick_date">Pick Date</string>
     <string name="invalid_sort_order_message">Please enter a valid sort order</string>
+    <string name="interval">Interval</string>
+    <string name="interval_length">Interval length</string>
+    <string name="next_transaction">Next transaction</string>
+    <string name="invalid_next_transaction_message">Please enter a valid next transaction date</string>
+    <string name="screen_budget_detail">Budget detail</string>
 </resources>

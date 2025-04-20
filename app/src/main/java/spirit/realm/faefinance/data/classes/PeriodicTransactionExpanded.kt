@@ -12,7 +12,7 @@ data class PeriodicTransactionExpanded(
 
     // Expanded recipient account details
     @Relation(parentColumn = "recipientAccount", entityColumn = "id")
-    val recipientAccount: Account,
+    val recipientAccount: Account?,
 
     // Expanded category details
     @Relation(parentColumn = "category", entityColumn = "id")

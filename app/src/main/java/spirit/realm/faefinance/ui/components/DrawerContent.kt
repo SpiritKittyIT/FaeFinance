@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
@@ -133,10 +132,10 @@ fun DrawerContent(
                         navigateToAccountForm = navigateToAccountForm,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    LazyColumn (
+                    Column (
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        itemsIndexed(localAccounts, key = { _, item -> item.id }) { index, account ->
+                        localAccounts.mapIndexed { index, account ->
                             DraggableAccountSelector(
                                 index = index,
                                 account = account,

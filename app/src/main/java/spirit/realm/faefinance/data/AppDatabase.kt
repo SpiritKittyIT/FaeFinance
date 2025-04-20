@@ -27,7 +27,7 @@ import spirit.realm.faefinance.data.daos.TransactionDao
         Transaction::class,
         PeriodicTransaction::class
     ],
-    version = 2
+    version = 3
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

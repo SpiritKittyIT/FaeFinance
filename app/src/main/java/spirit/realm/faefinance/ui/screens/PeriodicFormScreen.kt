@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,9 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import spirit.realm.faefinance.R
+import spirit.realm.faefinance.data.classes.ETransactionType
+import spirit.realm.faefinance.ui.components.AutocompleteDropdown
+import spirit.realm.faefinance.ui.components.DateField
 import spirit.realm.faefinance.ui.navigation.NavigationDestination
 import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 import spirit.realm.faefinance.ui.viewmodels.PeriodicFormViewModel
@@ -55,6 +61,89 @@ fun PeriodicFormScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
+                AutocompleteDropdown(
+                    label = stringResource(R.string.transaction_type),
+                    choices = viewModel.transactionTypeChoices,
+                    selected = state.typeChoice,
+                    onSelect = viewModel::updateTypeChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = viewModel::updateTitle,
+                    label = { Text(stringResource(R.string.title)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    singleLine = true,
+                )
+
+                OutlinedTextField(
+                    value = state.amount,
+                    onValueChange = viewModel::updateAmount,
+                    label = { Text(stringResource(R.string.amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                )
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.sender_account),
+                    choices = accountChoices,
+                    selected = state.senderAccountChoice,
+                    onSelect = viewModel::updateSenderAccount,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (state.typeChoice.value == ETransactionType.Transfer.toString()) {
+                    AutocompleteDropdown(
+                        label = stringResource(R.string.recipient_account),
+                        choices = accountChoices,
+                        selected = state.recipientAccountChoice,
+                        onSelect = viewModel::updateRecipientAccount,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.currency),
+                    choices = viewModel.currencyChoices,
+                    selected = state.currencyChoice,
+                    onSelect = viewModel::updateCurrencyChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.category),
+                    choices = categoryChoices,
+                    selected = state.categoryChoice,
+                    onSelect = viewModel::updateCategoryChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                DateField(
+                    label = stringResource(R.string.next_transaction),
+                    dateText = state.nextTransaction,
+                    onDateTextChange = viewModel::updateNextTransaction,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                AutocompleteDropdown(
+                    label = stringResource(R.string.interval),
+                    choices = viewModel.intervalChoices,
+                    selected = state.intervalChoice,
+                    onSelect = viewModel::updateIntervalChoice,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = state.intervalLength,
+                    onValueChange = viewModel::updateIntervalLength,
+                    label = { Text(stringResource(R.string.interval_length)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
 
                 if (state.isDeleteVisible) {
                     Button(

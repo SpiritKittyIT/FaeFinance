@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import spirit.realm.faefinance.R
 import spirit.realm.faefinance.ui.screens.AccountFormDestination
+import spirit.realm.faefinance.ui.screens.BudgetDetailDestination
 import spirit.realm.faefinance.ui.screens.BudgetFormDestination
 import spirit.realm.faefinance.ui.screens.CategoriesDestination
 import spirit.realm.faefinance.ui.screens.CategoryFormDestination
@@ -79,6 +80,7 @@ fun MyTopAppBar(
                     when (currentRoute) {
                         AccountFormDestination.routeWithArgs -> stringResource(R.string.form_account)
                         TransactionFormDestination.routeWithArgs -> stringResource(R.string.form_transaction)
+                        BudgetDetailDestination.routeWithArgs -> stringResource(R.string.screen_budget_detail)
                         BudgetFormDestination.routeWithArgs -> stringResource(R.string.form_budget)
                         PeriodicFormDestination.routeWithArgs -> stringResource(R.string.form_periodic)
                         CategoryFormDestination.routeWithArgs -> stringResource(R.string.form_category)

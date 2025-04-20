@@ -21,9 +21,11 @@ import spirit.realm.faefinance.data.repositories.PeriodicTransactionRepository
 import spirit.realm.faefinance.ui.utility.AccountUtil
 import spirit.realm.faefinance.ui.utility.CategoryUtil
 import spirit.realm.faefinance.ui.utility.CurrencyUtil
+import spirit.realm.faefinance.ui.utility.DateFormatterUtil
 import spirit.realm.faefinance.ui.utility.IAppResourceProvider
 import spirit.realm.faefinance.ui.utility.TransactionIntervalUtil
 import spirit.realm.faefinance.ui.utility.TransactionTypeUtil
+import java.util.Currency
 
 data class PeriodicFormState(
     var typeChoice: Choice = Choice(title = "", value = ""),
@@ -33,7 +35,7 @@ data class PeriodicFormState(
     val recipientAccountChoice: Choice = Choice(title = "", value = ""),
     val currencyChoice: Choice = Choice(title = "", value = ""),
     val categoryChoice: Choice = Choice(title = "", value = ""),
-    var nextTransaction: Date = Date(),
+    var nextTransaction: String = DateFormatterUtil.format(Date()),
     var intervalChoice: Choice = Choice(title = "", value = ""),
     var intervalLength: String = "0",
 
@@ -87,10 +89,16 @@ class PeriodicFormViewModel(
                         title = expanded.periodicTransaction.title,
                         amount = expanded.periodicTransaction.amount.toString(),
                         senderAccountChoice = _accountChoices.value.first { it.value == expanded.senderAccount.id.toString() },
-                        recipientAccountChoice = _accountChoices.value.first { it.value == expanded.recipientAccount.id.toString() },
+                        recipientAccountChoice = if (expanded.recipientAccount == null)
+                            Choice(title = "", value = "")
+                        else Choice(
+                            title = expanded.recipientAccount.title,
+                            value = expanded.recipientAccount.id.toString(),
+                            trailing = Currency.getInstance(expanded.recipientAccount.currency).symbol
+                        ),
                         currencyChoice = currencyChoices.first { it.value == expanded.periodicTransaction.currency },
                         categoryChoice = _categoryChoices.value.first { it.value == expanded.category.id.toString() },
-                        nextTransaction = expanded.periodicTransaction.nextTransaction,
+                        nextTransaction = DateFormatterUtil.format(expanded.periodicTransaction.nextTransaction),
                         intervalChoice = intervalChoices.first { it.value == expanded.periodicTransaction.interval.name },
                         intervalLength = expanded.periodicTransaction.intervalLength.toString(),
                         isDeleteVisible = true
@@ -104,11 +112,33 @@ class PeriodicFormViewModel(
     fun updateTypeChoice(choice: Choice) = _state.update { it.copy(typeChoice = choice) }
     fun updateTitle(title: String) = _state.update { it.copy(title = title) }
     fun updateAmount(amount: String) = _state.update { it.copy(amount = amount) }
-    fun updateSenderAccount(choice: Choice) = _state.update { it.copy(senderAccountChoice = choice) }
+    fun updateSenderAccount(newChoice: Choice) {
+        viewModelScope.launch {
+            _state.update { currentState ->
+                val shouldUpdateCurrency = currentState.currencyChoice.value.isBlank()
+                val newCurrencyChoice = if (shouldUpdateCurrency) {
+                    val account = accountRepository.getById(newChoice.value.toLongOrNull() ?: 0L).first()
+                    val currency = Currency.getInstance(account.currency)
+                    Choice(
+                        title = currency.displayName,
+                        value = currency.currencyCode,
+                        trailing = currency.symbol
+                    )
+                } else {
+                    currentState.currencyChoice
+                }
+
+                currentState.copy(
+                    senderAccountChoice = newChoice,
+                    currencyChoice = newCurrencyChoice
+                )
+            }
+        }
+    }
     fun updateRecipientAccount(choice: Choice) = _state.update { it.copy(recipientAccountChoice = choice) }
     fun updateCurrencyChoice(choice: Choice) = _state.update { it.copy(currencyChoice = choice) }
     fun updateCategoryChoice(choice: Choice) = _state.update { it.copy(categoryChoice = choice) }
-    fun updateNextTransaction(date: Date) = _state.update { it.copy(nextTransaction = date) }
+    fun updateNextTransaction(dateText: String) = _state.update { it.copy(nextTransaction = dateText) }
     fun updateIntervalChoice(choice: Choice) = _state.update { it.copy(intervalChoice = choice) }
     fun updateIntervalLength(length: String) = _state.update { it.copy(intervalLength = length) }
 
@@ -124,6 +154,7 @@ class PeriodicFormViewModel(
                     s.recipientAccountChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_recipient_account_message)
             s.currencyChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_currency_message)
             s.categoryChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_category_message)
+            DateFormatterUtil.tryParse(s.nextTransaction) == null -> resourceProvider.getString(R.string.invalid_next_transaction_message)
             s.intervalChoice.value.isBlank() -> resourceProvider.getString(R.string.invalid_interval_message)
             s.intervalLength.toIntOrNull() == null -> resourceProvider.getString(R.string.invalid_interval_length_message)
             else -> null
@@ -140,10 +171,10 @@ class PeriodicFormViewModel(
             title = s.title,
             amount = s.amount.toDouble(),
             senderAccount = s.senderAccountChoice.value.toLong(),
-            recipientAccount = s.recipientAccountChoice.value.toLongOrNull() ?: 0L,
+            recipientAccount = s.recipientAccountChoice.value.toLongOrNull(),
             currency = s.currencyChoice.value,
             category = s.categoryChoice.value.toLong(),
-            nextTransaction = s.nextTransaction,
+            nextTransaction = DateFormatterUtil.tryParse(s.nextTransaction)!!,
             interval = ETransactionInterval.valueOf(s.intervalChoice.value),
             intervalLength = s.intervalLength.toInt()
         )
@@ -155,6 +186,7 @@ class PeriodicFormViewModel(
             } else {
                 periodicTransactionRepository.update(model)
             }
+            periodicTransactionRepository.processAllUnprocessed()
         }
     }
 

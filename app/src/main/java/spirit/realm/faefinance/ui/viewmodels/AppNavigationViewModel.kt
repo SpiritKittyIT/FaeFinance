@@ -4,9 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import spirit.realm.faefinance.DatabaseApplication
 import spirit.realm.faefinance.data.SettingsDataStore
 import spirit.realm.faefinance.data.classes.Account
+import spirit.realm.faefinance.data.repositories.AccountRepository
+import spirit.realm.faefinance.data.repositories.PeriodicTransactionRepository
 import java.util.Currency
 
 data class AppNavigationState(
@@ -19,7 +20,8 @@ data class AppNavigationState(
 )
 
 class AppNavigationViewModel(
-    private val app: DatabaseApplication,
+    private val accountRepository: AccountRepository,
+    private val periodicTransactionRepository: PeriodicTransactionRepository,
     private val settings: SettingsDataStore
 ) : ViewModel() {
 
@@ -34,7 +36,7 @@ class AppNavigationViewModel(
 
     private fun initAccounts() {
         viewModelScope.launch {
-            app.container.accountRepository.getAll().collect { accounts ->
+            accountRepository.getAll().collect { accounts ->
                 _state.update { it.copy(accounts = accounts) }
             }
         }
@@ -61,7 +63,7 @@ class AppNavigationViewModel(
             settings.setActiveAccountId(id)
 
             if (id != 0L) {
-                app.container.accountRepository.getById(id).collect { account ->
+                accountRepository.getById(id).collect { account ->
                     val formattedBalance = try {
                         val symbol = Currency.getInstance(account.currency).symbol
                         "${"%.2f".format(account.balance)} $symbol"
@@ -100,7 +102,7 @@ class AppNavigationViewModel(
         viewModelScope.launch {
             updated.forEachIndexed { i, acc ->
                 if (acc.sortOrder != i.toLong()) {
-                    app.container.accountRepository.update(acc.copy(sortOrder = i.toLong()))
+                    accountRepository.update(acc.copy(sortOrder = i.toLong()))
                 }
             }
         }
@@ -108,5 +110,11 @@ class AppNavigationViewModel(
 
     fun setFormSubmitAction(action: () -> Unit) {
         _state.update { it.copy(formSubmit = action) }
+    }
+
+    fun onLaunch() {
+        viewModelScope.launch {
+            periodicTransactionRepository.processAllUnprocessed()
+        }
     }
 }

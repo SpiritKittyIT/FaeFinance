@@ -36,6 +36,8 @@ import spirit.realm.faefinance.ui.components.DrawerContent
 import spirit.realm.faefinance.ui.components.MyTopAppBar
 import spirit.realm.faefinance.ui.screens.AccountFormDestination
 import spirit.realm.faefinance.ui.screens.AccountFormScreen
+import spirit.realm.faefinance.ui.screens.BudgetDetailDestination
+import spirit.realm.faefinance.ui.screens.BudgetDetailScreen
 import spirit.realm.faefinance.ui.screens.BudgetFormDestination
 import spirit.realm.faefinance.ui.screens.BudgetsDestination
 import spirit.realm.faefinance.ui.screens.CategoriesDestination
@@ -85,6 +87,10 @@ fun AppNavigation(
         PeriodicDestination.route,
         CategoriesDestination.route
     )
+
+    LaunchedEffect(Unit) {
+        viewModel.onLaunch()
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -158,13 +164,26 @@ fun AppNavigation(
                     }
                 ) }
                 composable(BudgetsDestination.route) { BudgetsScreen() }
-                composable(PeriodicDestination.route) { PeriodicScreen() }
+                composable(PeriodicDestination.route) { PeriodicScreen(
+                    navigateToPeriodicForm = {
+                        navController.navigate("${PeriodicFormDestination.route}/$it")
+                    }
+                ) }
                 composable(ChartsDestination.route) { ChartsScreen() }
                 composable(CategoriesDestination.route) { CategoriesScreen(
                     navigateToCategoryForm = {
                         navController.navigate("${CategoryFormDestination.route}/$it")
                     }
                 ) }
+
+                composable(
+                    BudgetDetailDestination.routeWithArgs,
+                    arguments = listOf(navArgument(BudgetDetailDestination.ID_ARG) {
+                        type = NavType.LongType
+                    })
+                ) {
+                    BudgetDetailScreen()
+                }
 
                 // Form screens
                 composable(
@@ -175,7 +194,8 @@ fun AppNavigation(
                 ) {
                     AccountFormScreen(
                         navigateBack = { navController.popBackStack() },
-                        setFormSubmit = viewModel::setFormSubmitAction)
+                        setFormSubmit = viewModel::setFormSubmitAction
+                    )
                 }
                 composable(
                     TransactionFormDestination.routeWithArgs,
@@ -185,7 +205,8 @@ fun AppNavigation(
                 ) {
                     TransactionFormScreen(
                         navigateBack = { navController.popBackStack() },
-                        setFormSubmit = viewModel::setFormSubmitAction)
+                        setFormSubmit = viewModel::setFormSubmitAction
+                    )
                 }
                 composable(
                     BudgetFormDestination.routeWithArgs,
@@ -195,7 +216,8 @@ fun AppNavigation(
                 ) {
                     BudgetFormScreen(
                         navigateBack = { navController.popBackStack() },
-                        setFormSubmit = viewModel::setFormSubmitAction)
+                        setFormSubmit = viewModel::setFormSubmitAction
+                    )
                 }
                 composable(
                     PeriodicFormDestination.routeWithArgs,
@@ -205,7 +227,8 @@ fun AppNavigation(
                 ) {
                     PeriodicFormScreen(
                         navigateBack = { navController.popBackStack() },
-                        setFormSubmit = viewModel::setFormSubmitAction)
+                        setFormSubmit = viewModel::setFormSubmitAction
+                    )
                 }
                 composable(
                     CategoryFormDestination.routeWithArgs,
@@ -215,7 +238,8 @@ fun AppNavigation(
                 ) {
                     CategoryFormScreen(
                         navigateBack = { navController.popBackStack() },
-                        setFormSubmit = viewModel::setFormSubmitAction)
+                        setFormSubmit = viewModel::setFormSubmitAction
+                    )
                 }
             }
         }
