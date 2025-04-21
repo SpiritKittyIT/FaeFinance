@@ -26,6 +26,23 @@ import spirit.realm.faefinance.ui.screens.CategoryFormDestination
 import spirit.realm.faefinance.ui.screens.PeriodicFormDestination
 import spirit.realm.faefinance.ui.screens.TransactionFormDestination
 
+/**
+ * Displays the top app bar of the application.
+ *
+ * The app bar shows different content depending on whether it's a main screen or a form screen.
+ * On the main screen, it shows the account title, balance, and menu icon to toggle the drawer.
+ * On form or detail screens, it shows a dynamic title and a back navigation icon.
+ * When on a form screen, a confirm button is also shown to trigger submission.
+ *
+ * @param isMainScreen Whether the current screen is the main home screen.
+ * @param isForm Whether the current screen is a form requiring confirmation.
+ * @param currentRoute The current navigation route used to determine the screen title.
+ * @param accountTitle The title of the currently selected account (shown on main screen).
+ * @param accountBalance The formatted account balance to be displayed.
+ * @param navController Used for navigating back in the navigation stack.
+ * @param drawerState State of the navigation drawer (used to open/close it).
+ * @param submitFunction Function to execute when the confirm action is triggered.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyTopAppBar(
@@ -41,6 +58,7 @@ fun MyTopAppBar(
     val scope = rememberCoroutineScope()
 
     if (isMainScreen) {
+        // Top app bar for the main screen, including drawer toggle and account balance
         TopAppBar(
             title = {
                 Text(
@@ -72,8 +90,8 @@ fun MyTopAppBar(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
         )
-    }
-    else {
+    } else {
+        // Top app bar for form/detail screens, includes back button and optional confirm
         TopAppBar(
             title = {
                 Text(

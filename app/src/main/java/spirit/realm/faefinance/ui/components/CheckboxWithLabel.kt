@@ -10,6 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+/**
+ * Composable that displays a checkbox alongside a label.
+ *
+ * @param checked The current state of the checkbox (true if checked, false otherwise).
+ * @param label The label text displayed next to the checkbox.
+ * @param onCheckedChange A callback invoked when the checkbox state changes.
+ *                        It receives the new checked state (true or false).
+ */
 @Composable
 fun CheckboxWithLabel(
     checked: Boolean,

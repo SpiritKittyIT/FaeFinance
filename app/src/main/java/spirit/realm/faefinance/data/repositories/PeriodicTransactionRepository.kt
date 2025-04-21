@@ -8,6 +8,9 @@ import spirit.realm.faefinance.data.classes.*
 import spirit.realm.faefinance.data.daos.PeriodicTransactionDao
 import java.util.*
 
+/**
+ * Interface for managing periodic transactions (recurring transactions).
+ */
 interface IPeriodicTransactionRepository {
     suspend fun insert(periodicTransaction: PeriodicTransaction)
     suspend fun update(periodicTransaction: PeriodicTransaction)
@@ -21,62 +24,84 @@ interface IPeriodicTransactionRepository {
     fun getExpandedAll(): Flow<List<PeriodicTransactionExpanded>>
 }
 
+/**
+ * Repository implementation for PeriodicTransaction data and processing logic.
+ */
 class PeriodicTransactionRepository(
     private val db: AppDatabase,
     private val transactionRepo: TransactionRepository,
     private val periodicTransactionDao: PeriodicTransactionDao = db.periodicTransactionDao()
 ) : IPeriodicTransactionRepository {
 
+    /**
+     * Inserts a periodic transaction into the database.
+     */
     override suspend fun insert(periodicTransaction: PeriodicTransaction) {
         periodicTransactionDao.insert(periodicTransaction)
     }
 
+    /**
+     * Updates an existing periodic transaction.
+     */
     override suspend fun update(periodicTransaction: PeriodicTransaction) {
         periodicTransactionDao.update(periodicTransaction)
     }
 
+    /**
+     * Deletes a periodic transaction by its ID.
+     */
     override suspend fun deleteById(id: Long) {
         periodicTransactionDao.deleteById(id)
     }
 
+    /**
+     * Retrieves a periodic transaction by ID.
+     */
     override fun getById(id: Long): Flow<PeriodicTransaction> {
         return periodicTransactionDao.getById(id)
     }
 
+    /**
+     * Retrieves all periodic transactions that are due for processing.
+     */
     override fun getUnprocessed(): Flow<List<PeriodicTransaction>> {
         return periodicTransactionDao.getUnprocessed()
     }
 
+    /**
+     * Processes a single periodic transaction:
+     * - Converts it into a normal transaction
+     * - Either schedules the next one or deletes it if not recurring
+     */
     override suspend fun process(periodicTransaction: PeriodicTransaction) {
         db.withTransaction {
-            // Create a new Transaction based on the periodic transaction.
             val newTransaction = Transaction(
                 id = 0,
                 type = periodicTransaction.type,
                 title = periodicTransaction.title,
                 amount = periodicTransaction.amount,
-                amountConverted = 0.0, // Will be computed by TransactionDao
+                amountConverted = 0.0, // Converted later
                 senderAccount = periodicTransaction.senderAccount,
                 recipientAccount = periodicTransaction.recipientAccount,
                 currency = periodicTransaction.currency,
                 category = periodicTransaction.category,
                 timestamp = periodicTransaction.nextTransaction
             )
+
             transactionRepo.process(newTransaction)
 
-            // Process the periodic transaction based on its intervalLength.
             if (periodicTransaction.intervalLength == 0) {
-                // No further recurrence; delete this periodic transaction.
+                // One-time transaction, delete it after processing
                 periodicTransactionDao.deleteById(periodicTransaction.id)
-            }
-            else {
-                // Calculate new nextTransaction date.
-                val calendar = Calendar.getInstance()
-                calendar.time = periodicTransaction.nextTransaction
-                when (periodicTransaction.interval) {
-                    ETransactionInterval.Days -> calendar.add(Calendar.DAY_OF_YEAR, periodicTransaction.intervalLength)
-                    ETransactionInterval.Weeks -> calendar.add(Calendar.WEEK_OF_YEAR, periodicTransaction.intervalLength)
-                    ETransactionInterval.Months -> calendar.add(Calendar.MONTH, periodicTransaction.intervalLength)
+            } else {
+                // Reschedule next occurrence
+                val calendar = Calendar.getInstance().apply {
+                    time = periodicTransaction.nextTransaction
+                    when (periodicTransaction.interval) {
+                        ETransactionInterval.Days -> add(Calendar.DAY_OF_YEAR, periodicTransaction.intervalLength)
+                        ETransactionInterval.Weeks -> add(Calendar.WEEK_OF_YEAR, periodicTransaction.intervalLength)
+                        ETransactionInterval.Months -> add(Calendar.MONTH, periodicTransaction.intervalLength)
+                    }
                 }
                 periodicTransaction.nextTransaction = calendar.time
                 periodicTransactionDao.update(periodicTransaction)
@@ -84,6 +109,9 @@ class PeriodicTransactionRepository(
         }
     }
 
+    /**
+     * Processes all periodic transactions that are due.
+     */
     override suspend fun processAllUnprocessed() {
         var unprocessed = getUnprocessed().first()
         while (unprocessed.isNotEmpty()) {
@@ -94,10 +122,16 @@ class PeriodicTransactionRepository(
         }
     }
 
+    /**
+     * Retrieves an expanded version of a periodic transaction by ID.
+     */
     override fun getExpandedById(id: Long): Flow<PeriodicTransactionExpanded> {
         return periodicTransactionDao.getExpandedById(id)
     }
 
+    /**
+     * Retrieves all expanded periodic transactions.
+     */
     override fun getExpandedAll(): Flow<List<PeriodicTransactionExpanded>> {
         return periodicTransactionDao.getExpandedAll()
     }

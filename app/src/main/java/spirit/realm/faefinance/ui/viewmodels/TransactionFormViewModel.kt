@@ -25,6 +25,10 @@ import spirit.realm.faefinance.ui.utility.TransactionTypeUtil
 import java.util.Currency
 import java.util.Date
 
+/**
+ * Data class representing the state of the transaction form.
+ * This contains all the fields that the user can fill out when creating or updating a transaction.
+ */
 data class TransactionFormState(
     var typeChoice: Choice = Choice(title = "", value = ""),
     var title: String = "",
@@ -41,47 +45,62 @@ data class TransactionFormState(
     val isDeleteVisible: Boolean = false
 )
 
+/**
+ * ViewModel for managing the state and logic of a transaction form.
+ * It interacts with repositories to fetch account, category, and transaction data,
+ * as well as to submit or delete transactions.
+ */
 class TransactionFormViewModel(
     savedStateHandle: SavedStateHandle,
     private val resourceProvider: IAppResourceProvider,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository
-): ViewModel() {
+) : ViewModel() {
+
+    // Item ID for the transaction (used for editing an existing transaction)
     private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
+    // State flow to hold and observe the state of the transaction form
     private val _state = MutableStateFlow(TransactionFormState())
     val state: StateFlow<TransactionFormState> = _state.asStateFlow()
 
+    // Choices for currency and transaction types
     val currencyChoices = CurrencyUtil.currencyChoices
 
     val transactionTypeChoices = TransactionTypeUtil
         .getChoices(resourceProvider)
         .filter {
-            if (_itemId != 0L) it.value != ETransactionType.Transfer.toString()
-            else true
+            // Exclude 'Transfer' type if editing an existing transaction
+            if (_itemId != 0L) it.value != ETransactionType.Transfer.toString() else true
         }
 
+    // State flows for account and category choices (populated from the repositories)
     private val _accountChoices = MutableStateFlow<List<Choice>>(emptyList())
     val accountChoices: StateFlow<List<Choice>> = _accountChoices.asStateFlow()
 
     private val _categoryChoices = MutableStateFlow<List<Choice>>(emptyList())
     val categoryChoices: StateFlow<List<Choice>> = _categoryChoices.asStateFlow()
 
+    // Initialize the ViewModel by fetching account and category choices,
+    // and if editing an existing transaction, load its details.
     init {
         viewModelScope.launch {
+            // Fetch account choices from the account repository
             AccountUtil.getAccountChoices(accountRepository).collect {
                 _accountChoices.value = it
             }
         }
 
         viewModelScope.launch {
+            // Fetch category choices from the category repository
             CategoryUtil.getCategoryChoices(categoryRepository).collect {
                 _categoryChoices.value = it
             }
         }
 
         viewModelScope.launch {
+            // If editing, load the transaction details and update the state
             if (_itemId != 0L) {
                 transactionRepository.getExpandedById(_itemId).first().let { transactionExpanded ->
                     _state.value = TransactionFormState(
@@ -100,11 +119,11 @@ class TransactionFormViewModel(
                         ),
                         recipientAccountChoice = if (transactionExpanded.recipientAccount == null)
                             Choice(title = "", value = "")
-                            else Choice(
-                                title = transactionExpanded.recipientAccount.title,
-                                value = transactionExpanded.recipientAccount.id.toString(),
-                                trailing = Currency.getInstance(transactionExpanded.recipientAccount.currency).symbol
-                            ),
+                        else Choice(
+                            title = transactionExpanded.recipientAccount.title,
+                            value = transactionExpanded.recipientAccount.id.toString(),
+                            trailing = Currency.getInstance(transactionExpanded.recipientAccount.currency).symbol
+                        ),
                         categoryChoice = Choice(
                             title = transactionExpanded.category.title,
                             value = transactionExpanded.category.id.toString(),
@@ -118,10 +137,12 @@ class TransactionFormViewModel(
         }
     }
 
-    // --- State Updates ---
+    // --- State Update Functions ---
     fun updateTransactionTypeChoice(newChoice: Choice) = _state.update { state -> state.copy(typeChoice = newChoice) }
     fun updateTitle(newTitle: String) = _state.update { state -> state.copy(title = newTitle) }
     fun updateAmount(newAmount: String) = _state.update { state -> state.copy(amount = newAmount) }
+
+    // Updates the sender account choice and conditionally updates the currency choice based on the selected account
     fun updateSenderAccountChoice(newChoice: Choice) {
         viewModelScope.launch {
             _state.update { currentState ->
@@ -145,12 +166,13 @@ class TransactionFormViewModel(
             }
         }
     }
+
     fun updateRecipientAccountChoice(newChoice: Choice) = _state.update { state -> state.copy(recipientAccountChoice = newChoice) }
     fun updateCurrencyChoice(newChoice: Choice) = _state.update { state -> state.copy(currencyChoice = newChoice) }
     fun updateCategoryChoice(newChoice: Choice) = _state.update { state -> state.copy(categoryChoice = newChoice) }
     fun updateTimestamp(newTimestamp: String) = _state.update { state -> state.copy(timestamp = newTimestamp) }
 
-    // --- Submit ---
+    // --- Submit Function ---
     fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
         val error = when {
@@ -170,6 +192,7 @@ class TransactionFormViewModel(
             return
         }
 
+        // Prepare the transaction object for submission or update
         val updatedTransaction = Transaction(
             id = _itemId,
             type = ETransactionType.valueOf(s.typeChoice.value),
@@ -183,7 +206,10 @@ class TransactionFormViewModel(
             timestamp = DateFormatterUtil.tryParse(s.timestamp) ?: Date()
         )
 
+        // Navigate back after submission
         navigateBack()
+
+        // Submit the transaction
         viewModelScope.launch {
             if (_itemId == 0L) {
                 transactionRepository.process(updatedTransaction)
@@ -198,11 +224,11 @@ class TransactionFormViewModel(
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
+    // Deletes the transaction if editing an existing one
     fun deleteItem(navigateBack: () -> Unit) {
         navigateBack()
         viewModelScope.launch {
-            if (_itemId != 0L)
-            {
+            if (_itemId != 0L) {
                 transactionRepository.deleteById(_itemId)
             }
         }

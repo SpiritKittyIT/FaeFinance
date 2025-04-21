@@ -3,19 +3,15 @@ package spirit.realm.faefinance.data.repositories
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import spirit.realm.faefinance.data.CurrencyConverter
-import spirit.realm.faefinance.data.classes.Budget
-import spirit.realm.faefinance.data.classes.BudgetCategory
-import spirit.realm.faefinance.data.classes.BudgetExpanded
-import spirit.realm.faefinance.data.classes.ETransactionInterval
-import spirit.realm.faefinance.data.classes.ETransactionType
-import spirit.realm.faefinance.data.daos.BudgetCategoryDao
-import spirit.realm.faefinance.data.daos.BudgetDao
-import spirit.realm.faefinance.data.daos.TransactionDao
-import java.util.Calendar
-import java.util.Date
+import spirit.realm.faefinance.data.classes.*
+import spirit.realm.faefinance.data.daos.*
+import java.util.*
 import androidx.room.withTransaction
 import spirit.realm.faefinance.data.AppDatabase
 
+/**
+ * Interface for managing budget-related data.
+ */
 interface IBudgetRepository {
     suspend fun create(budget: Budget)
     suspend fun update(budget: Budget)
@@ -33,12 +29,19 @@ interface IBudgetRepository {
     suspend fun updateExpanded(budgetExpanded: BudgetExpanded)
 }
 
+/**
+ * Repository implementation for managing Budgets and BudgetExpanded objects.
+ */
 class BudgetRepository(
     private val db: AppDatabase,
     private val budgetDao: BudgetDao = db.budgetDao(),
     private val transactionDao: TransactionDao = db.transactionDao(),
     private val budgetCategoryDao: BudgetCategoryDao = db.budgetCategoryDao(),
 ) : IBudgetRepository {
+
+    /**
+     * Recalculates the amount spent for a budget based on its category transactions.
+     */
     private suspend fun recalculateAmountSpent(id: Long) {
         val budgetExpanded = budgetDao.getExpandedById(id).first()
 
@@ -51,14 +54,11 @@ class BudgetRepository(
             ).first()
 
             for (transaction in transactions) {
-                if (transaction.type != ETransactionType.Expense) {
-                    continue
-                }
+                if (transaction.type != ETransactionType.Expense) continue
 
                 val delta = if (transaction.currency != budgetExpanded.budget.currency) {
                     CurrencyConverter.convertCurrency(transaction.amount, transaction.currency, budgetExpanded.budget.currency)
-                }
-                else {
+                } else {
                     transaction.amount
                 }
 
@@ -69,12 +69,14 @@ class BudgetRepository(
         budgetDao.setAmountSpent(id, amountSpent)
     }
 
+    /**
+     * Creates the next budget in the set based on interval logic.
+     */
     private suspend fun createNext(currentBudget: Budget) {
-        // Calculate the next budget's start and end dates
         val calendar = Calendar.getInstance()
         calendar.time = currentBudget.endDate
 
-        // Apply the intervalLength to determine the next start and end dates
+        // Advance the end date based on the interval type
         when (currentBudget.interval) {
             ETransactionInterval.Days -> calendar.add(Calendar.DAY_OF_YEAR, currentBudget.intervalLength)
             ETransactionInterval.Weeks -> calendar.add(Calendar.WEEK_OF_YEAR, currentBudget.intervalLength)
@@ -83,9 +85,8 @@ class BudgetRepository(
 
         val currentExpanded = budgetDao.getExpandedById(currentBudget.id).first()
 
-        // Create the new budget as a copy of the current one
         val nextBudget = currentBudget.copy(
-            id = 0,  // Make sure to generate a new ID
+            id = 0,
             budgetSet = currentBudget.budgetSet,
             startDate = currentBudget.endDate,
             endDate = calendar.time,
@@ -98,30 +99,30 @@ class BudgetRepository(
         )
 
         db.withTransaction {
-            // Insert the new budget into the database
-            budgetDao.update(currentBudget.copy(
-                intervalLength = 0
-            ))
+            budgetDao.update(currentBudget.copy(intervalLength = 0))
             createExpanded(nextExpanded)
         }
     }
 
-    // public
+    // Public methods
 
+    /**
+     * Inserts a new budget and assigns a budgetSet if not already assigned.
+     */
     override suspend fun create(budget: Budget) {
         db.withTransaction {
             val id = budgetDao.insert(budget)
             if (budget.budgetSet == 0L) {
-                val updatedBudget = budget.copy(
-                    id = id,
-                    budgetSet = id
-                )
+                val updatedBudget = budget.copy(id = id, budgetSet = id)
                 budgetDao.update(updatedBudget)
             }
             recalculateAmountSpent(id)
         }
     }
 
+    /**
+     * Updates a budget and recalculates the spent amount.
+     */
     override suspend fun update(budget: Budget) {
         db.withTransaction {
             budgetDao.update(budget)
@@ -129,6 +130,9 @@ class BudgetRepository(
         }
     }
 
+    /**
+     * Deletes all budgets within a set, identified by the latest budget's ID.
+     */
     override suspend fun deleteSetByLatestId(id: Long) {
         db.withTransaction {
             val budget = budgetDao.getById(id).first()
@@ -139,14 +143,13 @@ class BudgetRepository(
         }
     }
 
-    override fun getById(id: Long): Flow<Budget> {
-        return budgetDao.getById(id)
-    }
+    override fun getById(id: Long): Flow<Budget> = budgetDao.getById(id)
 
-    override fun getAll(): Flow<List<Budget>> {
-        return budgetDao.getAll()
-    }
+    override fun getAll(): Flow<List<Budget>> = budgetDao.getAll()
 
+    /**
+     * Processes all deferred budgets, creating future ones as needed.
+     */
     override suspend fun processAllDeferred() {
         var deferredBudgets = budgetDao.getDeferredBudgets().first()
 
@@ -160,36 +163,28 @@ class BudgetRepository(
 
     // Expanded
 
-    override fun getExpandedAllInSet(setId: Long): Flow<List<BudgetExpanded>> {
-        return budgetDao.getExpandedAllInSet(setId)
-    }
+    override fun getExpandedAllInSet(setId: Long): Flow<List<BudgetExpanded>> =
+        budgetDao.getExpandedAllInSet(setId)
 
-    override fun getExpandedWithCategory(timestamp: Date, categoryId: Long): Flow<List<BudgetExpanded>> {
-        return budgetDao.getExpandedWithCategory(timestamp, categoryId)
-    }
+    override fun getExpandedWithCategory(timestamp: Date, categoryId: Long): Flow<List<BudgetExpanded>> =
+        budgetDao.getExpandedWithCategory(timestamp, categoryId)
 
-    override fun getExpandedAll(): Flow<List<BudgetExpanded>> {
-        return budgetDao.getExpandedAll()
-    }
+    override fun getExpandedAll(): Flow<List<BudgetExpanded>> = budgetDao.getExpandedAll()
 
-    override fun getExpandedById(id: Long): Flow<BudgetExpanded> {
-        return budgetDao.getExpandedById(id)
-    }
+    override fun getExpandedById(id: Long): Flow<BudgetExpanded> = budgetDao.getExpandedById(id)
 
+    /**
+     * Creates a BudgetExpanded with associated category links and initializes spent amount.
+     */
     override suspend fun createExpanded(budgetExpanded: BudgetExpanded) {
         db.withTransaction {
-            // Insert the budget
             val budgetId = budgetDao.insert(budgetExpanded.budget)
             if (budgetExpanded.budget.budgetSet == 0L) {
-                budgetDao.update(budgetExpanded.budget.copy(
-                    id = budgetId,
-                    budgetSet = budgetId
-                ))
+                budgetDao.update(budgetExpanded.budget.copy(id = budgetId, budgetSet = budgetId))
             }
 
-            // Insert the category links
-            val categoryLinks = budgetExpanded.categories.map { category ->
-                BudgetCategory(budget = budgetId, category = category.id)
+            val categoryLinks = budgetExpanded.categories.map {
+                BudgetCategory(budget = budgetId, category = it.id)
             }
             budgetCategoryDao.insertAll(categoryLinks)
 
@@ -197,45 +192,32 @@ class BudgetRepository(
         }
     }
 
-    override suspend fun updateExpanded(budgetExpanded: BudgetExpanded)  {
+    /**
+     * Updates an existing BudgetExpanded, updating category links and converting currency if needed.
+     */
+    override suspend fun updateExpanded(budgetExpanded: BudgetExpanded) {
         db.withTransaction {
             val budgetId = budgetExpanded.budget.id
-            val budgetExpandedOld = budgetDao.getExpandedById(budgetId).first()
+            val oldExpanded = budgetDao.getExpandedById(budgetId).first()
 
-            val existingLinks = budgetExpandedOld.categories.map { category ->
-                BudgetCategory(budget = budgetId, category = category.id)
-            }
-            val newLinks = budgetExpanded.categories.map { category ->
-                BudgetCategory(budget = budgetId, category = category.id)
-            }
+            val existingLinks = oldExpanded.categories.map { BudgetCategory(budgetId, it.id) }
+            val newLinks = budgetExpanded.categories.map { BudgetCategory(budgetId, it.id) }
 
-            if (existingLinks.toSet() != newLinks.toSet()) { // toSet() so they don't compare order
-                // remove old category links
+            if (existingLinks.toSet() != newLinks.toSet()) {
                 budgetCategoryDao.deleteAll(existingLinks)
-
-                // Insert updated category links
                 budgetCategoryDao.insertAll(newLinks)
-
-                // Update the budget
                 budgetDao.update(budgetExpanded.budget)
-
                 recalculateAmountSpent(budgetId)
-            }
-            else {
-                if (budgetExpandedOld.budget.currency != budgetExpanded.budget.currency) {
+            } else {
+                if (oldExpanded.budget.currency != budgetExpanded.budget.currency) {
                     val newAmountSpent = CurrencyConverter.convertCurrency(
                         budgetExpanded.budget.amountSpent,
-                        budgetExpandedOld.budget.currency,
+                        oldExpanded.budget.currency,
                         budgetExpanded.budget.currency
                     )
-
                     val newBudget = budgetExpanded.budget.copy(amountSpent = newAmountSpent)
-
-                    // Update the budget
                     budgetDao.update(newBudget)
-                }
-                else {
-                    // Update the budget
+                } else {
                     budgetDao.update(budgetExpanded.budget)
                 }
             }

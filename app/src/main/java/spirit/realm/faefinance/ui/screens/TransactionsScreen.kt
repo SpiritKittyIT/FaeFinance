@@ -36,32 +36,48 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 
+/**
+ * Defines the destination route for the Transactions screen.
+ */
 object TransactionsDestination : NavigationDestination {
     override val route = "transactions"
 }
 
+/**
+ * Composable function that displays a list of transactions grouped by month and year.
+ *
+ * The screen shows a list of transactions, grouped by month and year. For each transaction,
+ * relevant details such as title, amount, sender and recipient accounts are displayed.
+ * It also handles navigating to the transaction form when an item is long-pressed.
+ *
+ * @param navigateToTransactionForm A lambda function that navigates to the transaction form screen when a transaction is selected.
+ * @param viewModel The view model that provides the necessary data and handles business logic for the transactions screen.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TransactionsScreen(
     navigateToTransactionForm: (Long) -> Unit,
     viewModel: TransactionsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    // Collecting the state from the view model
     val state by viewModel.state.collectAsState()
 
-    LazyColumn (
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(8.dp)
     ) {
         itemsIndexed(state.groupedTransactions) { index, group ->
-            // Display the date
+            // Display the grouped date (month and year)
             val monthName = Month.of(group.groupDate.month).getDisplayName(TextStyle.FULL, Locale.getDefault())
             val year = group.groupDate.year
 
             Text("$monthName $year")
 
+            // Card to display transaction details for each group
             Card {
                 group.accounts.forEachIndexed { index, transaction ->
-                    val amountText = String.format(Locale.getDefault() ,"%.2f", transaction.transaction.amountConverted)
+                    val amountText = String.format(Locale.getDefault(), "%.2f", transaction.transaction.amountConverted)
+                    // Divider between transactions
                     if (index != 0) {
                         HorizontalDivider()
                     }
@@ -74,12 +90,14 @@ fun TransactionsScreen(
                             .combinedClickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = LocalIndication.current,
-                                onClick = { },
+                                onClick = { /* handle single click, if necessary */ },
                                 onLongClick = {
+                                    // Navigate to the transaction form on long click
                                     navigateToTransactionForm(transaction.transaction.id)
                                 }
                             )
                     ) {
+                        // Display the transaction category symbol with the sender account color
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(100.dp))
@@ -88,27 +106,33 @@ fun TransactionsScreen(
                         ) {
                             Text(transaction.category.symbol)
                         }
+
+                        // Column to display transaction details
                         Column(
                             horizontalAlignment = Alignment.End
                         ) {
-                            Row (
+                            Row(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
+                                // Display transaction title and amount
                                 Text(
                                     transaction.transaction.title,
                                     maxLines = 1,
                                     style = MaterialTheme.typography.titleLarge,
                                     modifier = Modifier.weight(1f)
                                 )
+                                // Display the amount with negative sign for expenses
                                 Text(
                                     if (transaction.transaction.type == ETransactionType.Expense)
-                                    "-${amountText}"
+                                        "-${amountText}"
                                     else amountText,
                                     color = if (transaction.transaction.type == ETransactionType.Expense)
                                         MaterialTheme.colorScheme.error
                                     else MaterialTheme.colorScheme.onSurface
                                 )
                             }
+
+                            // Display sender and recipient account information if applicable
                             if (transaction.recipientAccount != null) {
                                 Text(
                                     if (transaction.transaction.type == ETransactionType.Expense)
@@ -121,8 +145,10 @@ fun TransactionsScreen(
                     }
                 }
             }
+
+            // Add space at the bottom if this is the last item in the list
             if (index == state.groupedTransactions.size - 1) {
-                Box (
+                Box(
                     modifier = Modifier.fillMaxWidth().height(60.dp)
                 )
             }

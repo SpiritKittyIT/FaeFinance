@@ -16,15 +16,29 @@ interface AccountDao {
     @Query("DELETE FROM Account WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    // Update the balance for an Account by a given delta (increase or decrease)
+    /**
+     * Adjusts the balance of the account by a specified delta.
+     *
+     * @param id The ID of the account to update.
+     * @param delta The amount to adjust the balance by (can be positive or negative).
+     */
     @Query("UPDATE Account SET balance = balance + :delta WHERE id = :id")
     suspend fun updateBalance(id: Long, delta: Double)
 
-    // Retrieve all Accounts, ordered by the 'sortOrder' column
+    /**
+     * Retrieves all accounts ordered by their sortOrder.
+     *
+     * @return A Flow emitting a list of all accounts.
+     */
     @Query("SELECT * FROM Account ORDER BY sortOrder ASC")
     fun getAll(): Flow<List<Account>>
 
-    // Retrieve a specific Account by its ID
+    /**
+     * Retrieves a single account by its ID.
+     *
+     * @param id The ID of the account.
+     * @return A Flow emitting the matching account.
+     */
     @Query("SELECT * FROM Account WHERE id = :id")
     fun getById(id: Long): Flow<Account>
 }

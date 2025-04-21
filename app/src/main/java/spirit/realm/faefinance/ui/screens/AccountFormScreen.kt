@@ -1,18 +1,9 @@
 package spirit.realm.faefinance.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,12 +18,23 @@ import spirit.realm.faefinance.ui.navigation.NavigationDestination
 import spirit.realm.faefinance.ui.viewmodels.AccountFormViewModel
 import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 
+/**
+ * Navigation destination for the account form screen.
+ * This screen allows creating or editing an account.
+ */
 object AccountFormDestination : NavigationDestination {
     override val route = "account_form"
     const val ID_ARG = "id"
     val routeWithArgs = "$route/{$ID_ARG}"
 }
 
+/**
+ * Composable screen for creating or editing an account.
+ *
+ * @param navigateBack Function to call to navigate to the previous screen.
+ * @param setFormSubmit Function that allows parent navigation controller to hook into form submission.
+ * @param viewModel ViewModel providing form state and business logic.
+ */
 @Composable
 fun AccountFormScreen(
     navigateBack: () -> Unit,
@@ -41,32 +43,34 @@ fun AccountFormScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // Register form submit callback when screen is shown
     LaunchedEffect(Unit) {
         setFormSubmit {
             viewModel.validateAndSubmit(navigateBack)
         }
     }
 
+    // Main form layout using LazyColumn for potential scrolling
     LazyColumn {
         item {
-            Column (
+            Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(16.dp)
             ) {
+                // Account title field
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = viewModel::updateTitle,
                     label = { Text(stringResource(R.string.title)) },
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                    ),
-                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
+                    singleLine = true
                 )
+
+                // Currency dropdown field
                 AutocompleteDropdown(
                     label = stringResource(R.string.currency),
                     choices = viewModel.currencyChoices,
@@ -74,23 +78,26 @@ fun AccountFormScreen(
                     onSelect = viewModel::updateCurrencyChoice,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Balance input field
                 OutlinedTextField(
                     value = state.balance,
                     onValueChange = viewModel::updateBalance,
                     label = { Text(stringResource(R.string.balance)) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
+
+                // Color picker field
                 ColorHexField(
                     label = stringResource(R.string.color),
                     color = state.color,
                     onColorChange = viewModel::updateColor,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Delete button (conditionally visible)
                 if (state.isDeleteVisible) {
                     Button(
                         onClick = viewModel::triggerDeleteDialog,
@@ -103,7 +110,7 @@ fun AccountFormScreen(
         }
     }
 
-    // Error Dialog
+    // Displays an error dialog if input is invalid
     if (state.showErrorDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissErrorDialog,
@@ -117,7 +124,7 @@ fun AccountFormScreen(
         )
     }
 
-    // Delete Confirmation Dialog
+    // Delete confirmation dialog
     if (state.showDeleteDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissDeleteDialog,

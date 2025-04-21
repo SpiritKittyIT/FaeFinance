@@ -20,6 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
+/**
+ * Composable for displaying an input field to modify a color using a hex string.
+ *
+ * @param label The label to be displayed for the input field.
+ * @param color The current color that the input field represents.
+ * @param onColorChange A callback that is invoked when the color changes.
+ * @param modifier A modifier to be applied to the OutlinedTextField (optional).
+ */
 @Composable
 fun ColorHexField(
     label: String,
@@ -32,6 +40,11 @@ fun ColorHexField(
     var isError by remember { mutableStateOf(false) }
     val validColorRegex = remember { Regex("^#[0-9a-fA-F]{6}$") }
 
+    /**
+     * Function to update the color based on the new hex string entered.
+     *
+     * @param newHex The new hex string input by the user.
+     */
     fun updateColor(newHex: String) {
         hexText = newHex
         if (validColorRegex.matches(newHex)) {

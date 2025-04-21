@@ -4,27 +4,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import spirit.realm.faefinance.ui.screens.BudgetFormScreen
-import spirit.realm.faefinance.ui.screens.BudgetsScreen
-import spirit.realm.faefinance.ui.screens.ChartsScreen
-import spirit.realm.faefinance.ui.screens.PeriodicFormScreen
-import spirit.realm.faefinance.ui.screens.PeriodicScreen
-import spirit.realm.faefinance.ui.screens.TransactionFormScreen
-import spirit.realm.faefinance.ui.screens.TransactionsScreen
+import androidx.navigation.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -34,24 +18,17 @@ import spirit.realm.faefinance.R
 import spirit.realm.faefinance.ui.components.BottomAppBar
 import spirit.realm.faefinance.ui.components.DrawerContent
 import spirit.realm.faefinance.ui.components.MyTopAppBar
-import spirit.realm.faefinance.ui.screens.AccountFormDestination
-import spirit.realm.faefinance.ui.screens.AccountFormScreen
-import spirit.realm.faefinance.ui.screens.BudgetDetailDestination
-import spirit.realm.faefinance.ui.screens.BudgetDetailScreen
-import spirit.realm.faefinance.ui.screens.BudgetFormDestination
-import spirit.realm.faefinance.ui.screens.BudgetsDestination
-import spirit.realm.faefinance.ui.screens.CategoriesDestination
-import spirit.realm.faefinance.ui.screens.CategoriesScreen
-import spirit.realm.faefinance.ui.screens.CategoryFormDestination
-import spirit.realm.faefinance.ui.screens.CategoryFormScreen
-import spirit.realm.faefinance.ui.screens.ChartsDestination
-import spirit.realm.faefinance.ui.screens.PeriodicDestination
-import spirit.realm.faefinance.ui.screens.PeriodicFormDestination
-import spirit.realm.faefinance.ui.screens.TransactionFormDestination
-import spirit.realm.faefinance.ui.screens.TransactionsDestination
+import spirit.realm.faefinance.ui.screens.*
 import spirit.realm.faefinance.ui.viewmodels.AppNavigationViewModel
 import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 
+/**
+ * Main composable responsible for setting up app-wide navigation.
+ * It includes drawer, top app bar, bottom navigation bar, FAB, and routing between screens.
+ *
+ * @param viewModel AppNavigationViewModel responsible for handling navigation state.
+ * @param navController NavController used to manage back stack and screen transitions.
+ */
 @Composable
 fun AppNavigation(
     viewModel: AppNavigationViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -59,13 +36,17 @@ fun AppNavigation(
 ) {
     val scope = rememberCoroutineScope()
 
+    // Tracks the current screen route
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
+    // State collected from ViewModel
     val state by viewModel.state.collectAsState()
 
+    // Controls the drawer open/close state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
+    // UI logic to toggle visibility of elements based on current screen
     val showBottomAppBar = currentRoute in listOf(
         TransactionsDestination.route,
         BudgetsDestination.route,
@@ -88,24 +69,22 @@ fun AppNavigation(
         CategoriesDestination.route
     )
 
+    // Trigger one-time startup actions
     LaunchedEffect(Unit) {
         viewModel.onLaunch()
     }
 
+    // Scaffold layout with navigation drawer
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             DrawerContent(
                 navigateToAccountForm = {
-                    scope.launch {
-                        drawerState.close()
-                    }
+                    scope.launch { drawerState.close() }
                     navController.navigate("${AccountFormDestination.route}/$it")
                 },
                 navigateToCategories = {
-                    scope.launch {
-                        drawerState.close()
-                    }
+                    scope.launch { drawerState.close() }
                     navController.navigate(CategoriesDestination.route)
                 },
                 navigationViewModel = viewModel
@@ -134,7 +113,6 @@ fun AppNavigation(
                                 BudgetsDestination.route -> navController.navigate("${BudgetFormDestination.route}/0")
                                 PeriodicDestination.route -> navController.navigate("${PeriodicFormDestination.route}/0")
                                 CategoriesDestination.route -> navController.navigate("${CategoryFormDestination.route}/0")
-                                else -> {}
                             }
                         }
                     ) {
@@ -151,6 +129,7 @@ fun AppNavigation(
                 }
             }
         ) { innerPadding ->
+            // Handles actual navigation between different screens
             NavHost(
                 navController = navController,
                 startDestination = TransactionsDestination.route,
@@ -183,6 +162,7 @@ fun AppNavigation(
                     }
                 ) }
 
+                // Detail screen
                 composable(
                     BudgetDetailDestination.routeWithArgs,
                     arguments = listOf(navArgument(BudgetDetailDestination.ID_ARG) {

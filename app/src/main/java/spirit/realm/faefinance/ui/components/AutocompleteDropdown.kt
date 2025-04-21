@@ -13,6 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 
+/**
+ * Data class representing a single choice in the autocomplete dropdown.
+ *
+ * @param title The display title of the choice.
+ * @param value The underlying value of the choice.
+ * @param leading Optional leading icon text.
+ * @param trailing Optional trailing icon text.
+ */
 class Choice(
     val title: String,
     val value: String,
@@ -22,6 +30,15 @@ class Choice(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * A composable function that displays an autocomplete dropdown menu.
+ *
+ * @param label The label to display for the dropdown field.
+ * @param choices A list of available choices to display in the dropdown.
+ * @param selected The currently selected choice.
+ * @param onSelect A callback function to handle when a new choice is selected.
+ * @param modifier A [Modifier] to customize the UI appearance of the dropdown.
+ */
 fun AutocompleteDropdown(
     label: String,
     choices: List<Choice>,

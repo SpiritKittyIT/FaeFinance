@@ -13,7 +13,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -28,37 +30,52 @@ import spirit.realm.faefinance.R
 import spirit.realm.faefinance.data.classes.ETransactionType
 import spirit.realm.faefinance.ui.components.DateField
 
+/**
+ * Destination for the Transaction Form screen.
+ * Supports both creating and editing transactions.
+ */
 object TransactionFormDestination : NavigationDestination {
     override val route = "transaction_form"
     const val ID_ARG = "id"
     val routeWithArgs = "$route/{$ID_ARG}"
 }
 
+/**
+ * Composable function to display the transaction form.
+ *
+ * @param navigateBack Callback to navigate back after successful form submission.
+ * @param setFormSubmit Callback to set form submission logic.
+ * @param viewModel ViewModel to handle form state and logic.
+ */
 @Composable
 fun TransactionFormScreen(
     navigateBack: () -> Unit,
     setFormSubmit: (() -> Unit) -> Unit,
     viewModel: TransactionFormViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    // Collecting the state and available choices from the ViewModel
     val state by viewModel.state.collectAsState()
     val accountChoices by viewModel.accountChoices.collectAsState()
     val categoryChoices by viewModel.categoryChoices.collectAsState()
 
+    // Trigger form submission action when the form is ready
     LaunchedEffect(Unit) {
         setFormSubmit {
             viewModel.validateAndSubmit(navigateBack)
         }
     }
 
-    LazyColumn  {
+    // Layout for the transaction form using LazyColumn for efficient rendering
+    LazyColumn {
         item {
-            Column (
+            Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
+                // Dropdown for selecting transaction type (Income, Expense, Transfer)
                 AutocompleteDropdown(
                     label = stringResource(R.string.transaction_type),
                     choices = viewModel.transactionTypeChoices,
@@ -67,6 +84,7 @@ fun TransactionFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Outlined text field for the title of the transaction
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = viewModel::updateTitle,
@@ -76,6 +94,7 @@ fun TransactionFormScreen(
                     singleLine = true,
                 )
 
+                // Outlined text field for the amount of the transaction
                 OutlinedTextField(
                     value = state.amount,
                     onValueChange = viewModel::updateAmount,
@@ -85,6 +104,7 @@ fun TransactionFormScreen(
                     singleLine = true,
                 )
 
+                // Dropdown for selecting the sender account
                 AutocompleteDropdown(
                     label = stringResource(R.string.sender_account),
                     choices = accountChoices,
@@ -93,6 +113,7 @@ fun TransactionFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // If the transaction is a transfer, allow selecting the recipient account
                 if (state.typeChoice.value == ETransactionType.Transfer.toString()) {
                     AutocompleteDropdown(
                         label = stringResource(R.string.recipient_account),
@@ -103,6 +124,7 @@ fun TransactionFormScreen(
                     )
                 }
 
+                // Dropdown for selecting the currency of the transaction
                 AutocompleteDropdown(
                     label = stringResource(R.string.currency),
                     choices = viewModel.currencyChoices,
@@ -111,6 +133,7 @@ fun TransactionFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Dropdown for selecting the category of the transaction
                 AutocompleteDropdown(
                     label = stringResource(R.string.category),
                     choices = categoryChoices,
@@ -119,6 +142,7 @@ fun TransactionFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Date picker for selecting the transaction timestamp
                 DateField(
                     label = stringResource(R.string.timestamp),
                     dateText = state.timestamp,
@@ -126,6 +150,7 @@ fun TransactionFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Delete button shown if the transaction has a delete option
                 if (state.isDeleteVisible) {
                     Button(
                         onClick = viewModel::triggerDeleteDialog,
@@ -138,7 +163,7 @@ fun TransactionFormScreen(
         }
     }
 
-    // Error Dialog
+    // Error dialog for invalid input
     if (state.showErrorDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissErrorDialog,
@@ -152,7 +177,7 @@ fun TransactionFormScreen(
         )
     }
 
-    // Delete Confirmation Dialog
+    // Delete confirmation dialog
     if (state.showDeleteDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissDeleteDialog,

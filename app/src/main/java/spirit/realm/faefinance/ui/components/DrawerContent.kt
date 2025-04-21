@@ -33,20 +33,34 @@ import spirit.realm.faefinance.R
 import spirit.realm.faefinance.data.classes.Account
 import spirit.realm.faefinance.ui.viewmodels.AppNavigationViewModel
 
+/**
+ * DrawerContent displays the contents of the navigation drawer.
+ *
+ * It shows the app branding, a theme toggle, the account selector (with drag and drop),
+ * and navigation buttons to manage accounts and categories.
+ *
+ * @param navigateToAccountForm Function to navigate to the account form screen.
+ * @param navigateToCategories Function to navigate to the category management screen.
+ * @param navigationViewModel ViewModel holding app navigation state and actions.
+ */
 @Composable
 fun DrawerContent(
     navigateToAccountForm: (Long) -> Unit,
     navigateToCategories: () -> Unit,
     navigationViewModel: AppNavigationViewModel
 ) {
+    // Observes current app navigation state from the ViewModel
     val state by navigationViewModel.state.collectAsState()
 
+    // Local copy of account list to support drag-and-drop reordering
     var localAccounts by remember(state.accounts) {
         mutableStateOf(if (state.accounts.isNotEmpty()) state.accounts else emptyList())
     }
 
+    // Tracks the currently dragged item's index
     var draggedIndex by remember { mutableIntStateOf(-1) }
 
+    // Handles reordering of accounts within the list
     val onMove = { from: Int, to: Int ->
         if (from != to && to in localAccounts.indices) {
             localAccounts = localAccounts.toMutableList().apply {
@@ -55,26 +69,30 @@ fun DrawerContent(
         }
     }
 
+    // Called when drag operation ends; updates the ViewModel
     val onDragEnd = {
         navigationViewModel.updateAccountOrder(localAccounts)
         draggedIndex = -1
     }
 
+    // A pseudo-account representing the "All accounts" option
     val allAccount = Account(
         title = stringResource(R.string.default_account_title),
         color = MaterialTheme.colorScheme.primaryContainer
     )
 
+    // UI: Modal drawer layout containing all content
     ModalDrawerSheet {
         LazyColumn {
             item {
-                Column (
+                // Branding and theme switch section
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(16.dp)
                 ) {
-                    Row (
+                    Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -85,6 +103,7 @@ fun DrawerContent(
                                 .size(180.dp)
                                 .clip(RoundedCornerShape(1000.dp))
                         )
+                        // Theme toggle switch (light/dark)
                         Switch(
                             checked = state.isDarkTheme,
                             onCheckedChange = navigationViewModel::setDarkTheme,
@@ -118,13 +137,16 @@ fun DrawerContent(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                Column (
+
+                // Account selection section
+                Column(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
+                    // Selector for "All Accounts"
                     AccountSelector(
                         account = allAccount,
                         activeAccountId = state.activeAccountId,
@@ -132,9 +154,10 @@ fun DrawerContent(
                         navigateToAccountForm = navigateToAccountForm,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Column (
+                    Column(
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
+                        // Draggable selectors for each user-defined account
                         localAccounts.mapIndexed { index, account ->
                             DraggableAccountSelector(
                                 index = index,
@@ -144,13 +167,13 @@ fun DrawerContent(
                                 navigateToAccountForm = navigateToAccountForm,
                                 onMove = onMove,
                                 onDragEnd = onDragEnd,
-                                modifier = Modifier
-                                    .fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
                     HorizontalDivider()
-                    Column (
+                    // Navigation buttons for managing accounts and categories
+                    Column(
                         modifier = Modifier.fillMaxWidth(0.7f)
                     ) {
                         Button(

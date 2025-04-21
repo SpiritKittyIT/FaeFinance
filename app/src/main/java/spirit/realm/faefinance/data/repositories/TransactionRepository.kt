@@ -6,23 +6,18 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import spirit.realm.faefinance.data.AppDatabase
 import spirit.realm.faefinance.data.CurrencyConverter
-import spirit.realm.faefinance.data.classes.ETransactionType
-import spirit.realm.faefinance.data.classes.TransactionExpanded
-import spirit.realm.faefinance.data.classes.TransactionGroup
-import spirit.realm.faefinance.data.classes.TransactionGroupDate
+import spirit.realm.faefinance.data.classes.*
 import spirit.realm.faefinance.data.daos.AccountDao
 import spirit.realm.faefinance.data.daos.BudgetDao
-import spirit.realm.faefinance.data.classes.Transaction as DataTransaction
 import spirit.realm.faefinance.data.daos.TransactionDao
-import java.util.Calendar
-import java.util.Date
+import java.util.*
 
 interface ITransactionRepository {
-    fun getById(id: Long): Flow<DataTransaction>
-    suspend fun update(transaction: DataTransaction)
-    suspend fun delete(transaction: DataTransaction)
+    fun getById(id: Long): Flow<Transaction>
+    suspend fun update(transaction: Transaction)
+    suspend fun delete(transaction: Transaction)
     suspend fun deleteById(id: Long)
-    suspend fun process(transaction: DataTransaction)
+    suspend fun process(transaction: Transaction)
     suspend fun deleteAllByAccount(accountId: Long)
     fun getExpandedById(id: Long): Flow<TransactionExpanded>
     fun getExpandedAllByAccountGrouped(accountId: Long): Flow<List<TransactionGroup>>
@@ -35,155 +30,143 @@ class TransactionRepository(
     private val budgetDao: BudgetDao = db.budgetDao(),
     private val accountDao: AccountDao = db.accountDao()
 ) : ITransactionRepository {
-    // Apply/revert account balance and budget
-    private suspend fun apply(transaction: DataTransaction, revert: Boolean = false) {
-        val modifier = if (revert) { -1 } else { 1 }
-        val typeModifier = if (transaction.type == ETransactionType.Expense) { -1 } else { 1 }
+
+    /**
+     * Applies or reverts the financial impact of a transaction on account balances and budgets.
+     * @param revert if true, undoes the transaction effects.
+     */
+    private suspend fun apply(transaction: Transaction, revert: Boolean = false) {
+        val modifier = if (revert) -1 else 1
+        val typeModifier = if (transaction.type == ETransactionType.Expense) -1 else 1
 
         if (transaction.type == ETransactionType.Transfer) {
-            throw IllegalArgumentException("Transaction of type Transfer cannot be applied")
+            throw IllegalArgumentException("Transfer transactions must be split before applying.")
         }
 
-        // Update account balance
-        accountDao.updateBalance(transaction.senderAccount, transaction.amountConverted * modifier * typeModifier)
+        // Adjust the sender account balance
+        accountDao.updateBalance(
+            transaction.senderAccount,
+            transaction.amountConverted * modifier * typeModifier
+        )
 
-        // Update budgets balance
+        // Update any related budgets if it's an expense
         if (transaction.type == ETransactionType.Expense) {
             val budgets = budgetDao.getWithCategory(transaction.timestamp, transaction.category).first()
             for (budget in budgets) {
-                val amountConverted = if (transaction.currency != budget.currency) {
+                val converted = if (transaction.currency != budget.currency) {
                     CurrencyConverter.convertCurrency(transaction.amount, transaction.currency, budget.currency)
-                }
-                else {
-                    transaction.amount
-                }
-                budgetDao.updateAmountSpent(budget.id, amountConverted * modifier)
+                } else transaction.amount
+
+                budgetDao.updateAmountSpent(budget.id, converted * modifier)
             }
         }
     }
 
-    private suspend fun createTransaction(transaction: DataTransaction) {
+    /**
+     * Inserts a new transaction into the database and updates all related balances.
+     */
+    private suspend fun createTransaction(transaction: Transaction) {
         if (transaction.type == ETransactionType.Transfer) {
-            throw IllegalArgumentException("Transaction of type Transfer cannot be created directly")
+            throw IllegalArgumentException("Direct creation of transfers is not allowed.")
         }
 
-        // Get the account's currency
+        // Convert amount to the sender's currency if needed
         val accountCurrency = accountDao.getById(transaction.senderAccount).first().currency
-
-        // If different, convert the amount
         transaction.amountConverted = if (transaction.currency != accountCurrency) {
-            CurrencyConverter.convertCurrency(
-                transaction.amount,
-                transaction.currency,
-                accountCurrency
-            )
-        } else {
-            transaction.amount
-        }
+            CurrencyConverter.convertCurrency(transaction.amount, transaction.currency, accountCurrency)
+        } else transaction.amount
 
-        // Insert the transaction record
+        // Insert and apply the transaction
         transactionDao.insert(transaction)
-
-        // Update account balance and budgets
         apply(transaction)
     }
 
-    // public
+    // --- Public API implementations ---
 
-
-    override fun getById(id: Long): Flow<DataTransaction> {
+    override fun getById(id: Long): Flow<Transaction> {
         return transactionDao.getById(id)
     }
 
-    override suspend fun update(transaction: DataTransaction) {
+    /**
+     * Updates an existing transaction and reflects changes in balances and budgets.
+     */
+    override suspend fun update(transaction: Transaction) {
         db.withTransaction {
             val oldTransaction = transactionDao.getById(transaction.id).first()
 
-            // Revert effects of the old transaction:
-            apply(oldTransaction, true)
+            // Revert old effects
+            apply(oldTransaction, revert = true)
 
-            // Disallow updating to a Transfer type.
             if (transaction.type == ETransactionType.Transfer) {
-                throw IllegalArgumentException("Transaction of type Transfer cannot be updated directly")
+                throw IllegalArgumentException("Cannot update transaction to a Transfer type.")
             }
 
-            // Get the account's currency
+            // Convert amount if currency changed
             val accountCurrency = accountDao.getById(transaction.senderAccount).first().currency
-
-            // Process the new transaction:
             transaction.amountConverted = if (transaction.currency != accountCurrency) {
-                CurrencyConverter.convertCurrency(
-                    transaction.amount,
-                    transaction.currency,
-                    accountCurrency
-                )
-            } else {
-                transaction.amount
-            }
+                CurrencyConverter.convertCurrency(transaction.amount, transaction.currency, accountCurrency)
+            } else transaction.amount
 
-            // Update the transaction record.
+            // Save and apply updated transaction
             transactionDao.update(transaction)
-
-            // Apply new effects:
             apply(transaction)
         }
     }
 
+    /**
+     * Deletes a transaction by ID, reverting its effects.
+     */
     override suspend fun deleteById(id: Long) {
         db.withTransaction {
             val transaction = transactionDao.getById(id).first()
-
-            // Revert transaction effects
-            apply(transaction, true)
-
-            // Delete the transaction record
+            apply(transaction, revert = true)
             transactionDao.deleteById(id)
         }
     }
 
-    override suspend fun delete(transaction: DataTransaction) {
+    /**
+     * Deletes a transaction and reverts its impact.
+     */
+    override suspend fun delete(transaction: Transaction) {
         db.withTransaction {
-            // Revert transaction effects
-            apply(transaction, true)
-
-            // Delete the transaction record
+            apply(transaction, revert = true)
             transactionDao.deleteById(transaction.id)
         }
     }
 
-    override suspend fun process(transaction: DataTransaction) {
+    /**
+     * Processes a new transaction. If it's a transfer, it will create a pair of internal transactions.
+     */
+    override suspend fun process(transaction: Transaction) {
         db.withTransaction {
-            // Create non transfer transaction and return
             if (transaction.type != ETransactionType.Transfer) {
                 createTransaction(transaction)
-            }
-            else {
-                if (transaction.recipientAccount != null) {
-                    // Create income transaction for the recipient account.
+            } else {
+                // Handle transfer as separate income/expense
+                transaction.recipientAccount?.let {
                     val incomeTransaction = transaction.copy(
-                        id = 0, // Assume a new auto-generated id
+                        id = 0,
                         type = ETransactionType.Income,
-                        senderAccount = transaction.recipientAccount!!,
+                        senderAccount = it,
                         recipientAccount = transaction.senderAccount
                     )
                     createTransaction(incomeTransaction)
                 }
 
-                // Create expense transaction for the sender account.
                 val expenseTransaction = transaction.copy(
-                    id = 0, // Assume a new auto-generated id
-                    type = ETransactionType.Expense,
-                    senderAccount = transaction.senderAccount,
-                    recipientAccount = transaction.recipientAccount
+                    id = 0,
+                    type = ETransactionType.Expense
                 )
                 createTransaction(expenseTransaction)
             }
         }
     }
 
+    /**
+     * Deletes all transactions linked to an account, reverting each one.
+     */
     override suspend fun deleteAllByAccount(accountId: Long) {
         val transactions = transactionDao.getAllByAccount(accountId).first()
-
         for (transaction in transactions) {
             delete(transaction)
         }
@@ -193,22 +176,26 @@ class TransactionRepository(
         return transactionDao.getExpandedById(id)
     }
 
+    /**
+     * Groups transactions by year and month for display purposes.
+     */
     override fun getExpandedAllByAccountGrouped(accountId: Long): Flow<List<TransactionGroup>> {
         return transactionDao.getExpandedAllByAccount(accountId).map { list ->
             list.groupBy {
                 val cal = Calendar.getInstance().apply { time = it.transaction.timestamp }
-                TransactionGroupDate(
-                    year = cal.get(Calendar.YEAR),
-                    month = cal.get(Calendar.MONTH) + 1 // calendar months are 0-based
-                )
-            }.toSortedMap(compareByDescending<TransactionGroupDate> { it.year }
-                .thenByDescending { it.month })
-            .map { (date, transactions) ->
+                TransactionGroupDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1)
+            }.toSortedMap(
+                compareByDescending<TransactionGroupDate> { it.year }
+                    .thenByDescending { it.month }
+            ).map { (date, transactions) ->
                 TransactionGroup(groupDate = date, accounts = transactions)
             }
         }
     }
 
+    /**
+     * Fetches all transactions for an account within a date range.
+     */
     override fun getExpandedAllByAccountInterval(accountId: Long, after: Date, before: Date): Flow<List<TransactionExpanded>> {
         return transactionDao.getExpandedAllByAccountInterval(accountId, after, before)
     }

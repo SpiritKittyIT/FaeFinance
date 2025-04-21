@@ -1,23 +1,11 @@
 package spirit.realm.faefinance.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,12 +20,24 @@ import spirit.realm.faefinance.ui.navigation.NavigationDestination
 import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 import spirit.realm.faefinance.ui.viewmodels.BudgetFormViewModel
 
+/**
+ * Defines the navigation route for the budget form screen.
+ * Used for both creating and editing budgets.
+ */
 object BudgetFormDestination : NavigationDestination {
     override val route = "budget_form"
     const val ID_ARG = "id"
     val routeWithArgs = "$route/{$ID_ARG}"
 }
 
+/**
+ * Budget form screen that allows users to create or update budget details.
+ * Includes inputs for title, amount, categories, date, interval settings, etc.
+ *
+ * @param navigateBack Callback to navigate back on form submission or deletion.
+ * @param setFormSubmit Used to hook form validation and submission to the parent screen.
+ * @param viewModel Backing ViewModel handling state and logic for the form.
+ */
 @Composable
 fun BudgetFormScreen(
     navigateBack: () -> Unit,
@@ -47,21 +47,24 @@ fun BudgetFormScreen(
     val state by viewModel.state.collectAsState()
     val categoryList by viewModel.categoryList.collectAsState()
 
+    // Registers form submission logic with the parent (e.g., FAB or top bar)
     LaunchedEffect(Unit) {
         setFormSubmit {
             viewModel.validateAndSubmit(navigateBack)
         }
     }
 
+    // Form content layout
     LazyColumn {
         item {
-            Column (
+            Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
+                // Title input
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = viewModel::updateTitle,
@@ -69,6 +72,7 @@ fun BudgetFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Amount input
                 OutlinedTextField(
                     value = state.amount,
                     onValueChange = viewModel::updateAmount,
@@ -77,6 +81,7 @@ fun BudgetFormScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
+                // Category selection
                 Button(
                     onClick = viewModel::showCategoryDialog,
                     modifier = Modifier.fillMaxWidth()
@@ -84,6 +89,7 @@ fun BudgetFormScreen(
                     Text(stringResource(R.string.select_categories))
                 }
 
+                // Start date input
                 DateField(
                     label = stringResource(R.string.start_date),
                     dateText = state.startDate,
@@ -91,6 +97,7 @@ fun BudgetFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Currency selector
                 AutocompleteDropdown(
                     label = stringResource(R.string.currency),
                     choices = viewModel.currencyChoices,
@@ -99,6 +106,7 @@ fun BudgetFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Interval selector
                 AutocompleteDropdown(
                     label = stringResource(R.string.interval),
                     choices = viewModel.intervalChoices,
@@ -107,6 +115,7 @@ fun BudgetFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Interval length input
                 OutlinedTextField(
                     value = state.intervalLength,
                     onValueChange = viewModel::updateIntervalLength,
@@ -116,6 +125,7 @@ fun BudgetFormScreen(
                     singleLine = true,
                 )
 
+                // Optional delete button (visible only when editing existing item)
                 if (state.isDeleteVisible) {
                     Button(
                         onClick = viewModel::triggerDeleteDialog,
@@ -128,7 +138,7 @@ fun BudgetFormScreen(
         }
     }
 
-    // Category selection dialog
+    // Category selection dialog with checkboxes
     if (state.showCategoryDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissCategoryDialog,
@@ -146,6 +156,7 @@ fun BudgetFormScreen(
                         if (index != 0) {
                             HorizontalDivider()
                         }
+
                         CheckboxWithLabel(
                             checked = selected,
                             label = category.title,
@@ -169,8 +180,7 @@ fun BudgetFormScreen(
         )
     }
 
-
-    // Error Dialog
+    // Error dialog for invalid inputs or failed validation
     if (state.showErrorDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissErrorDialog,
@@ -184,7 +194,7 @@ fun BudgetFormScreen(
         )
     }
 
-    // Delete Confirmation Dialog
+    // Delete confirmation dialog
     if (state.showDeleteDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissDeleteDialog,

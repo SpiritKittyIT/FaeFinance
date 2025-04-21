@@ -1,17 +1,9 @@
 package spirit.realm.faefinance.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,37 +22,51 @@ import spirit.realm.faefinance.ui.navigation.NavigationDestination
 import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 import spirit.realm.faefinance.ui.viewmodels.PeriodicFormViewModel
 
+/**
+ * Navigation destination for the PeriodicForm screen.
+ */
 object PeriodicFormDestination : NavigationDestination {
     override val route = "periodic_form"
     const val ID_ARG = "id"
     val routeWithArgs = "$route/{$ID_ARG}"
 }
 
+/**
+ * Screen displaying a form for creating/editing periodic transactions.
+ *
+ * @param navigateBack Callback function for navigating back to the previous screen.
+ * @param setFormSubmit Callback function for setting the form submission behavior.
+ * @param viewModel ViewModel for managing the periodic form's state and business logic.
+ */
 @Composable
 fun PeriodicFormScreen(
     navigateBack: () -> Unit,
     setFormSubmit: (() -> Unit) -> Unit,
     viewModel: PeriodicFormViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    // Collect the form state and choices from the ViewModel
     val state by viewModel.state.collectAsState()
     val accountChoices by viewModel.accountChoices.collectAsState()
     val categoryChoices by viewModel.categoryChoices.collectAsState()
 
+    // Set the form submission action when the screen is first composed
     LaunchedEffect(Unit) {
         setFormSubmit {
             viewModel.validateAndSubmit(navigateBack)
         }
     }
 
+    // Layout for the periodic form
     LazyColumn {
         item {
-            Column (
+            Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
+                // Transaction type dropdown
                 AutocompleteDropdown(
                     label = stringResource(R.string.transaction_type),
                     choices = viewModel.transactionTypeChoices,
@@ -69,24 +75,27 @@ fun PeriodicFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Title input field
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = viewModel::updateTitle,
                     label = { Text(stringResource(R.string.title)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    singleLine = true,
+                    singleLine = true
                 )
 
+                // Amount input field
                 OutlinedTextField(
                     value = state.amount,
                     onValueChange = viewModel::updateAmount,
                     label = { Text(stringResource(R.string.amount)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    singleLine = true
                 )
 
+                // Sender account dropdown
                 AutocompleteDropdown(
                     label = stringResource(R.string.sender_account),
                     choices = accountChoices,
@@ -95,6 +104,7 @@ fun PeriodicFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // If the transaction type is Transfer, show recipient account dropdown
                 if (state.typeChoice.value == ETransactionType.Transfer.toString()) {
                     AutocompleteDropdown(
                         label = stringResource(R.string.recipient_account),
@@ -105,6 +115,7 @@ fun PeriodicFormScreen(
                     )
                 }
 
+                // Currency dropdown
                 AutocompleteDropdown(
                     label = stringResource(R.string.currency),
                     choices = viewModel.currencyChoices,
@@ -113,6 +124,7 @@ fun PeriodicFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Category dropdown
                 AutocompleteDropdown(
                     label = stringResource(R.string.category),
                     choices = categoryChoices,
@@ -121,6 +133,7 @@ fun PeriodicFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Date picker for next transaction
                 DateField(
                     label = stringResource(R.string.next_transaction),
                     dateText = state.nextTransaction,
@@ -128,6 +141,7 @@ fun PeriodicFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Interval dropdown
                 AutocompleteDropdown(
                     label = stringResource(R.string.interval),
                     choices = viewModel.intervalChoices,
@@ -136,15 +150,17 @@ fun PeriodicFormScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Interval length input field
                 OutlinedTextField(
                     value = state.intervalLength,
                     onValueChange = viewModel::updateIntervalLength,
                     label = { Text(stringResource(R.string.interval_length)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
+                    singleLine = true
                 )
 
+                // Delete button visibility
                 if (state.isDeleteVisible) {
                     Button(
                         onClick = viewModel::triggerDeleteDialog,
@@ -157,7 +173,7 @@ fun PeriodicFormScreen(
         }
     }
 
-    // Error Dialog
+    // Error Dialog - Displays error message if input is invalid
     if (state.showErrorDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissErrorDialog,

@@ -27,6 +27,11 @@ import spirit.realm.faefinance.ui.utility.TransactionIntervalUtil
 import spirit.realm.faefinance.ui.utility.TransactionTypeUtil
 import java.util.Currency
 
+/**
+ * Data class representing the state of the periodic transaction form.
+ * It holds the form's state including the selected transaction type, amount, accounts, category,
+ * and various other fields related to periodic transactions.
+ */
 data class PeriodicFormState(
     var typeChoice: Choice = Choice(title = "", value = ""),
     var title: String = "",
@@ -45,6 +50,10 @@ data class PeriodicFormState(
     val isDeleteVisible: Boolean = false
 )
 
+/**
+ * ViewModel responsible for managing the periodic transaction form's state and handling form submissions.
+ * It includes logic to fetch and update data, validate inputs, and submit a new or updated periodic transaction.
+ */
 class PeriodicFormViewModel(
     savedStateHandle: SavedStateHandle,
     private val resourceProvider: IAppResourceProvider,
@@ -53,8 +62,10 @@ class PeriodicFormViewModel(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
+    // The ID of the periodic transaction being edited (if any)
     private val _itemId: Long = savedStateHandle["id"] ?: 0L
 
+    // Mutable state flow to hold the current state of the periodic transaction form
     private val _state = MutableStateFlow(PeriodicFormState())
     val state: StateFlow<PeriodicFormState> = _state.asStateFlow()
 
@@ -62,6 +73,7 @@ class PeriodicFormViewModel(
     val intervalChoices = TransactionIntervalUtil.getChoices(resourceProvider)
     val currencyChoices = CurrencyUtil.currencyChoices
 
+    // Mutable state flows for available account and category choices
     private val _accountChoices = MutableStateFlow<List<Choice>>(emptyList())
     val accountChoices: StateFlow<List<Choice>> = _accountChoices.asStateFlow()
 
@@ -69,18 +81,21 @@ class PeriodicFormViewModel(
     val categoryChoices: StateFlow<List<Choice>> = _categoryChoices.asStateFlow()
 
     init {
+        // Initialize account choices from the account repository
         viewModelScope.launch {
             AccountUtil.getAccountChoices(accountRepository).collect {
                 _accountChoices.value = it
             }
         }
 
+        // Initialize category choices from the category repository
         viewModelScope.launch {
             CategoryUtil.getCategoryChoices(categoryRepository).collect {
                 _categoryChoices.value = it
             }
         }
 
+        // If editing an existing periodic transaction, load its details and set the form state
         viewModelScope.launch {
             if (_itemId != 0L) {
                 periodicTransactionRepository.getExpandedById(_itemId).first().let { expanded ->
@@ -89,13 +104,13 @@ class PeriodicFormViewModel(
                         title = expanded.periodicTransaction.title,
                         amount = expanded.periodicTransaction.amount.toString(),
                         senderAccountChoice = _accountChoices.value.first { it.value == expanded.senderAccount.id.toString() },
-                        recipientAccountChoice = if (expanded.recipientAccount == null)
-                            Choice(title = "", value = "")
-                        else Choice(
-                            title = expanded.recipientAccount.title,
-                            value = expanded.recipientAccount.id.toString(),
-                            trailing = Currency.getInstance(expanded.recipientAccount.currency).symbol
-                        ),
+                        recipientAccountChoice = expanded.recipientAccount?.let {
+                            Choice(
+                                title = it.title,
+                                value = it.id.toString(),
+                                trailing = Currency.getInstance(it.currency).symbol
+                            )
+                        } ?: Choice(title = "", value = ""),
                         currencyChoice = currencyChoices.first { it.value == expanded.periodicTransaction.currency },
                         categoryChoice = _categoryChoices.value.first { it.value == expanded.category.id.toString() },
                         nextTransaction = DateFormatterUtil.format(expanded.periodicTransaction.nextTransaction),
@@ -108,10 +123,31 @@ class PeriodicFormViewModel(
         }
     }
 
-    // --- State Updates ---
+    // --- State Update Methods ---
+
+    /**
+     * Updates the transaction type choice in the form state.
+     * @param choice The selected transaction type.
+     */
     fun updateTypeChoice(choice: Choice) = _state.update { it.copy(typeChoice = choice) }
+
+    /**
+     * Updates the title of the periodic transaction in the form state.
+     * @param title The title of the periodic transaction.
+     */
     fun updateTitle(title: String) = _state.update { it.copy(title = title) }
+
+    /**
+     * Updates the amount for the periodic transaction in the form state.
+     * @param amount The amount of the transaction.
+     */
     fun updateAmount(amount: String) = _state.update { it.copy(amount = amount) }
+
+    /**
+     * Updates the sender account choice in the form state.
+     * This will also update the currency choice based on the selected account's currency.
+     * @param newChoice The selected sender account.
+     */
     fun updateSenderAccount(newChoice: Choice) {
         viewModelScope.launch {
             _state.update { currentState ->
@@ -135,14 +171,50 @@ class PeriodicFormViewModel(
             }
         }
     }
+
+    /**
+     * Updates the recipient account choice in the form state.
+     * @param choice The selected recipient account.
+     */
     fun updateRecipientAccount(choice: Choice) = _state.update { it.copy(recipientAccountChoice = choice) }
+
+    /**
+     * Updates the currency choice in the form state.
+     * @param choice The selected currency.
+     */
     fun updateCurrencyChoice(choice: Choice) = _state.update { it.copy(currencyChoice = choice) }
+
+    /**
+     * Updates the category choice in the form state.
+     * @param choice The selected category.
+     */
     fun updateCategoryChoice(choice: Choice) = _state.update { it.copy(categoryChoice = choice) }
+
+    /**
+     * Updates the next transaction date in the form state.
+     * @param dateText The date of the next transaction.
+     */
     fun updateNextTransaction(dateText: String) = _state.update { it.copy(nextTransaction = dateText) }
+
+    /**
+     * Updates the interval choice in the form state.
+     * @param choice The selected interval.
+     */
     fun updateIntervalChoice(choice: Choice) = _state.update { it.copy(intervalChoice = choice) }
+
+    /**
+     * Updates the interval length in the form state.
+     * @param length The length of the interval (in numeric form).
+     */
     fun updateIntervalLength(length: String) = _state.update { it.copy(intervalLength = length) }
 
-    // --- Submit ---
+    // --- Submit Method ---
+
+    /**
+     * Validates the form and submits the periodic transaction.
+     * If there are any validation errors, they will be shown to the user.
+     * @param navigateBack The callback to navigate back after submission.
+     */
     fun validateAndSubmit(navigateBack: () -> Unit) {
         val s = _state.value
 
@@ -180,6 +252,7 @@ class PeriodicFormViewModel(
         )
 
         navigateBack()
+
         viewModelScope.launch {
             if (_itemId == 0L) {
                 periodicTransactionRepository.insert(model)
@@ -190,19 +263,33 @@ class PeriodicFormViewModel(
         }
     }
 
-    // --- Dialog Control ---
+    // --- Dialog Control Methods ---
+
+    /**
+     * Dismisses the error dialog.
+     */
     fun dismissErrorDialog() = _state.update { it.copy(showErrorDialog = false) }
+
+    /**
+     * Triggers the delete dialog.
+     */
     fun triggerDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
+
+    /**
+     * Dismisses the delete dialog.
+     */
     fun dismissDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
 
+    /**
+     * Deletes the current periodic transaction and navigates back.
+     * @param navigateBack The callback to navigate back after deletion.
+     */
     fun deleteItem(navigateBack: () -> Unit) {
         navigateBack()
         viewModelScope.launch {
-            if (_itemId != 0L)
-            {
+            if (_itemId != 0L) {
                 periodicTransactionRepository.deleteById(_itemId)
             }
         }
     }
 }
-

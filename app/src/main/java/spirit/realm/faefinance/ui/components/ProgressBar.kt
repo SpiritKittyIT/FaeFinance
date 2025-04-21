@@ -14,6 +14,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Displays a horizontal progress bar with a label showing the amount spent out of the maximum.
+ *
+ * The bar visually indicates progress based on the ratio of `amountSpent` to `amountMax`.
+ * A background bar represents the total capacity, and a foreground bar fills based on the ratio.
+ * The label text is shown centered, displaying the numerical values (e.g. "30 / 100").
+ *
+ * @param amountSpent The amount currently spent.
+ * @param amountMax The maximum budget or value.
+ * @param modifier Modifier for customizing layout and styling from the parent.
+ */
 @Composable
 fun ProgressBar(
     amountSpent: Double,

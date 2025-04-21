@@ -2,21 +2,13 @@ package spirit.realm.faefinance.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,10 +23,20 @@ import spirit.realm.faefinance.ui.navigation.NavigationDestination
 import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 import spirit.realm.faefinance.ui.viewmodels.CategoriesViewModel
 
+/**
+ * Navigation destination for the Categories screen.
+ */
 object CategoriesDestination : NavigationDestination {
     override val route = "categories"
 }
 
+/**
+ * Displays a list of budget categories.
+ * Each category includes its symbol, title, and an edit icon.
+ *
+ * @param navigateToCategoryForm Callback to navigate to the form for editing a category.
+ * @param viewModel Backing ViewModel for state management.
+ */
 @Composable
 fun CategoriesScreen(
     navigateToCategoryForm: (Long) -> Unit,
@@ -42,46 +44,56 @@ fun CategoriesScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LazyColumn (
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(8.dp)
     ) {
         itemsIndexed(state.categories) { index, category ->
             Card {
-                Row (
+                Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(6.dp)
                 ) {
+                    // Symbol circle
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(100.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(4.dp)
                     ) {
-                        Text(category.symbol, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(
+                            text = category.symbol,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
+
+                    // Category title
                     Text(
-                        category.title,
+                        text = category.title,
                         maxLines = 1,
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f)
                     )
+
+                    // Edit icon
                     Icon(
-                        Icons.Default.Edit,
-                        stringResource(R.string.edit),
-                        modifier = Modifier
-                            .clickable( onClick = {
-                                navigateToCategoryForm(category.id)
-                            } )
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.edit),
+                        modifier = Modifier.clickable {
+                            navigateToCategoryForm(category.id)
+                        }
                     )
                 }
             }
-            if (index == state.categories.size - 1) {
-                Box (
-                    modifier = Modifier.fillMaxWidth().height(60.dp)
+
+            // Extra bottom padding for the last item
+            if (index == state.categories.lastIndex) {
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
                 )
             }
         }

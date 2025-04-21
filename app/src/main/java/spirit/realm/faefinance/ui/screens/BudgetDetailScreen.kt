@@ -1,17 +1,11 @@
 package spirit.realm.faefinance.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,34 +21,44 @@ import spirit.realm.faefinance.ui.viewmodels.AppViewModelProvider
 import spirit.realm.faefinance.ui.viewmodels.BudgetDetailViewModel
 import java.util.Currency
 
+/**
+ * Navigation destination for the budget detail screen.
+ * This shows details of one or more budget entries, including title, categories, and progress.
+ */
 object BudgetDetailDestination : NavigationDestination {
     override val route = "budget_detail"
     const val ID_ARG = "id"
     val routeWithArgs = "${route}/{$ID_ARG}"
 }
 
+/**
+ * Composable screen that displays a list of budgets with their categories, amounts, and dates.
+ *
+ * @param viewModel ViewModel for accessing budget detail state.
+ */
 @Composable
 fun BudgetDetailScreen(
     viewModel: BudgetDetailViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val state by viewModel.state.collectAsState()
 
-    LazyColumn (
+    // LazyColumn to display all budget entries
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(8.dp)
     ) {
         itemsIndexed(state.budgets) { index, expanded ->
             Card {
                 Column {
-                    Column (
+                    // Header section with title and currency
+                    Column(
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.secondaryContainer)
                     ) {
-                        Row (
+                        Row(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(6.dp)
+                            modifier = Modifier.padding(6.dp)
                         ) {
                             Text(
                                 "${expanded.budget.title} ${Currency.getInstance(expanded.budget.currency).symbol}",
@@ -63,11 +67,12 @@ fun BudgetDetailScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                        Row (
+
+                        // Category tags (displayed as symbol chips)
+                        Row(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(6.dp)
+                            modifier = Modifier.padding(6.dp)
                         ) {
                             expanded.categories.map { category ->
                                 Box(
@@ -84,11 +89,12 @@ fun BudgetDetailScreen(
                             }
                         }
                     }
-                    Row (
+
+                    // Budget progress row with start/end dates and progress bar
+                    Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(6.dp)
+                        modifier = Modifier.padding(6.dp)
                     ) {
                         Text(DateFormatterUtil.format(expanded.budget.startDate))
                         ProgressBar(
