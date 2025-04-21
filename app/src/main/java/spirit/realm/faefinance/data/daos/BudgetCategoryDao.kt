@@ -22,4 +22,8 @@ interface BudgetCategoryDao {
     // Retrieve all BudgetCategories associated with a specific budgetId.
     @Query("SELECT * FROM BudgetCategory WHERE budget = :budgetId")
     fun getAllForBudget(budgetId: Long): Flow<List<BudgetCategory>>
+
+    // Delete all BudgetCategories associated with a specific budgetId.
+    @Query("DELETE FROM BudgetCategory WHERE budget = :budgetId")
+    suspend fun deleteAllForBudget(budgetId: Long)
 }

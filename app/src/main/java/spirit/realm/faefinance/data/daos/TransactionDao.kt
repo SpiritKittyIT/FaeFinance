@@ -50,4 +50,12 @@ interface TransactionDao {
         ORDER BY timestamp DESC
     """)
     fun getExpandedAllByAccount(accountId: Long): Flow<List<TransactionExpanded>>
+
+    @Transaction
+    @Query("""
+        select * FROM `Transaction` 
+        WHERE (:accountId = 0 OR senderAccount = :accountId)
+        AND timestamp >= :after AND timestamp < :before
+    """)
+    fun getExpandedAllByAccountInterval(accountId: Long, after: Date, before: Date): Flow<List<TransactionExpanded>>
 }

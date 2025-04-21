@@ -163,7 +163,14 @@ fun AppNavigation(
                         navController.navigate("${TransactionFormDestination.route}/$it")
                     }
                 ) }
-                composable(BudgetsDestination.route) { BudgetsScreen() }
+                composable(BudgetsDestination.route) { BudgetsScreen(
+                    navigateToBudgetForm = {
+                        navController.navigate("${BudgetFormDestination.route}/$it")
+                    },
+                    navigateToBudgetDetail = {
+                        navController.navigate("${BudgetDetailDestination.route}/$it")
+                    },
+                ) }
                 composable(PeriodicDestination.route) { PeriodicScreen(
                     navigateToPeriodicForm = {
                         navController.navigate("${PeriodicFormDestination.route}/$it")

@@ -17,6 +17,7 @@ object AppViewModelProvider {
             AppNavigationViewModel(
                 accountRepository = app.container.accountRepository,
                 periodicTransactionRepository = app.container.periodicTransactionRepository,
+                budgetRepository = app.container.budgetRepository,
                 settings = app.container.settings
             )
         }
@@ -110,6 +111,15 @@ object AppViewModelProvider {
                 transactionRepository = app.container.transactionRepository,
                 accountRepository = app.container.accountRepository,
                 categoryRepository = app.container.categoryRepository
+            )
+        }
+
+        initializer {
+            val app = this.databaseApplication()
+            ChartsViewModel(
+                resourceProvider = AppResourceProvider(app.applicationContext),
+                transactionRepository = app.container.transactionRepository,
+                settings = app.container.settings
             )
         }
     }

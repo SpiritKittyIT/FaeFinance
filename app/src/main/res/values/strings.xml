@@ -63,4 +63,10 @@
     <string name="next_transaction">Next transaction</string>
     <string name="invalid_next_transaction_message">Please enter a valid next transaction date</string>
     <string name="screen_budget_detail">Budget detail</string>
+    <string name="all">All</string>
+    <string name="transactions">transactions</string>
+    <string name="amount_spent">Amount spent</string>
+    <string name="start_date">Start date</string>
+    <string name="invalid_start_date_message">Please enter a valid start date</string>
+    <string name="select_categories">Select categories</string>
 </resources>

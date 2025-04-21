@@ -84,4 +84,8 @@ interface BudgetDao {
     @Transaction
     @Query("SELECT * FROM Budget WHERE id = :id")
     fun getExpandedById(id: Long): Flow<BudgetExpanded>
+
+    // Retrieve all Expanded Budget records sorted by startDate in ascending order
+    @Query("SELECT * FROM Budget WHERE budgetSet = :setId")
+    fun getExpandedAllInSet(setId: Long): Flow<List<BudgetExpanded>>
 }

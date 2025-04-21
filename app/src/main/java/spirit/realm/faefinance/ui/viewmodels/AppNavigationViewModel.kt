@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import spirit.realm.faefinance.data.SettingsDataStore
 import spirit.realm.faefinance.data.classes.Account
 import spirit.realm.faefinance.data.repositories.AccountRepository
+import spirit.realm.faefinance.data.repositories.BudgetRepository
 import spirit.realm.faefinance.data.repositories.PeriodicTransactionRepository
 import java.util.Currency
 
@@ -22,6 +23,7 @@ data class AppNavigationState(
 class AppNavigationViewModel(
     private val accountRepository: AccountRepository,
     private val periodicTransactionRepository: PeriodicTransactionRepository,
+    private val budgetRepository: BudgetRepository,
     private val settings: SettingsDataStore
 ) : ViewModel() {
 
@@ -115,6 +117,9 @@ class AppNavigationViewModel(
     fun onLaunch() {
         viewModelScope.launch {
             periodicTransactionRepository.processAllUnprocessed()
+        }
+        viewModelScope.launch {
+            budgetRepository.processAllDeferred()
         }
     }
 }

@@ -15,6 +15,7 @@ import spirit.realm.faefinance.data.daos.BudgetDao
 import spirit.realm.faefinance.data.classes.Transaction as DataTransaction
 import spirit.realm.faefinance.data.daos.TransactionDao
 import java.util.Calendar
+import java.util.Date
 
 interface ITransactionRepository {
     fun getById(id: Long): Flow<DataTransaction>
@@ -25,6 +26,7 @@ interface ITransactionRepository {
     suspend fun deleteAllByAccount(accountId: Long)
     fun getExpandedById(id: Long): Flow<TransactionExpanded>
     fun getExpandedAllByAccountGrouped(accountId: Long): Flow<List<TransactionGroup>>
+    fun getExpandedAllByAccountInterval(accountId: Long, after: Date, before: Date): Flow<List<TransactionExpanded>>
 }
 
 class TransactionRepository(
@@ -205,5 +207,9 @@ class TransactionRepository(
                 TransactionGroup(groupDate = date, accounts = transactions)
             }
         }
+    }
+
+    override fun getExpandedAllByAccountInterval(accountId: Long, after: Date, before: Date): Flow<List<TransactionExpanded>> {
+        return transactionDao.getExpandedAllByAccountInterval(accountId, after, before)
     }
 }

@@ -25,7 +25,11 @@ class BudgetsViewModel(
         viewModelScope.launch {
             budgetRepository.getExpandedAll()
                 .collect { list ->
-                    _state.update { it.copy(budgets = list) }
+                    val filtered = list.groupBy { it.budget.budgetSet }
+                        .mapNotNull { (_, group) ->
+                            group.maxByOrNull { it.budget.startDate.time }
+                        }
+                    _state.update { it.copy(budgets = filtered) }
                 }
         }
     }
