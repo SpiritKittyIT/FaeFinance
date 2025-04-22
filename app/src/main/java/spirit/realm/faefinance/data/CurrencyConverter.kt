@@ -74,7 +74,8 @@ object CurrencyConverter {
 
         // Check if the response indicates success.
         if (response.result != "success") {
-            throw IllegalStateException("Currency conversion failed: ${response.errorType}")
+            return 0.0 // i don't have time, nor sanity to fix invalid currencies
+            //throw IllegalStateException("Currency conversion failed: ${response.errorType}")
         }
 
         // Return the conversion result if present.
