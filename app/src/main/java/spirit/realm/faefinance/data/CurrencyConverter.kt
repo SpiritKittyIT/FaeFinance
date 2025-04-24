@@ -70,15 +70,20 @@ object CurrencyConverter {
         if (fromCurrency == toCurrency) return amount
 
         // Get the conversion result from the API.
-        val response = api.getConverted(API_KEY, fromCurrency, toCurrency, amount)
+        try {
+            val response = api.getConverted(API_KEY, fromCurrency, toCurrency, amount)
 
-        // Check if the response indicates success.
-        if (response.result != "success") {
-            return 0.0 // i don't have time, nor sanity to fix invalid currencies
-            //throw IllegalStateException("Currency conversion failed: ${response.errorType}")
+            // Check if the response indicates success.
+            if (response.result != "success") {
+                return 0.0 // i don't have time, nor sanity to fix invalid currencies
+                //throw IllegalStateException("Currency conversion failed: ${response.errorType}")
+            }
+
+            // Return the conversion result if present.
+            return response.conversionResult ?: throw IllegalStateException("Conversion result was null")
         }
-
-        // Return the conversion result if present.
-        return response.conversionResult ?: throw IllegalStateException("Conversion result was null")
+        catch (_: Exception) {
+            return 0.0// i don't have time, nor sanity to fix offline
+        }
     }
 }
